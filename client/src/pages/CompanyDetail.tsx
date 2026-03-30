@@ -4,7 +4,7 @@ import { apiRequest } from "@/lib/queryClient";
 import Layout from "@/components/Layout";
 import { StatusBadge } from "@/components/TechBadge";
 import { Skeleton } from "@/components/ui/skeleton";
-import { ArrowLeft, Globe, ExternalLink, MapPin, Building2, Zap, BarChart2 } from "lucide-react";
+import { ArrowLeft, Globe, ExternalLink, MapPin, Building2, Zap } from "lucide-react";
 
 const ROLE_LABELS: Record<string, string> = {
   hyperscaler: "Hyperscaler",
@@ -88,48 +88,6 @@ export default function CompanyDetail() {
             )}
           </div>
         </div>
-
-        {/* Financial snapshot */}
-        {company.stockPrice && (
-          <div className="bg-card border border-border rounded-xl p-4 mb-5">
-            <div className="flex items-center gap-2 mb-3">
-              <BarChart2 size={13} className="text-emerald-400" />
-              <span className="text-xs font-semibold text-foreground uppercase tracking-wide">Financials</span>
-              {company.ticker && (
-                <a href={`https://perplexity.ai/finance/${company.ticker}`} target="_blank" rel="noopener noreferrer"
-                  className="ml-auto flex items-center gap-1 text-[10px] text-primary hover:underline">
-                  {company.ticker} <ExternalLink size={9} />
-                </a>
-              )}
-              {company.finsUpdatedDate && <span className="text-[10px] text-muted-foreground">as of {company.finsUpdatedDate}</span>}
-            </div>
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-3">
-              {[
-                { label: 'Stock Price', value: `$${company.stockPrice.toFixed(2)}` },
-                { label: 'Market Cap', value: company.marketCapB ? `$${company.marketCapB >= 1000 ? (company.marketCapB/1000).toFixed(1)+'T' : company.marketCapB.toFixed(1)+'B'}` : '—' },
-                { label: 'P/E Ratio', value: company.peRatio ? `${company.peRatio.toFixed(1)}x` : 'N/A' },
-                { label: 'TTM Revenue', value: company.revenueTtmB ? `$${company.revenueTtmB >= 1000 ? (company.revenueTtmB/1000).toFixed(1)+'T' : company.revenueTtmB.toFixed(0)+'B'}` : '—' },
-              ].map(({ label, value }) => (
-                <div key={label} className="bg-muted/30 rounded px-3 py-2">
-                  <div className="text-[9px] text-muted-foreground uppercase tracking-wide mb-0.5">{label}</div>
-                  <div className="text-sm font-bold text-foreground">{value}</div>
-                </div>
-              ))}
-            </div>
-            <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-              {[
-                { label: 'EBITDA (TTM)', value: company.ebitdaTtmB != null ? `$${Math.abs(company.ebitdaTtmB).toFixed(1)}B` : '—', pos: (company.ebitdaTtmB ?? 0) >= 0 },
-                { label: 'Net Income (TTM)', value: company.netIncomeTtmB != null ? `$${Math.abs(company.netIncomeTtmB).toFixed(1)}B` : '—', pos: (company.netIncomeTtmB ?? 0) >= 0 },
-                { label: 'Free Cash Flow (TTM)', value: company.fcfTtmB != null ? `$${Math.abs(company.fcfTtmB).toFixed(1)}B` : '—', pos: (company.fcfTtmB ?? 0) >= 0 },
-              ].map(({ label, value, pos }) => (
-                <div key={label} className="bg-muted/30 rounded px-3 py-2">
-                  <div className="text-[9px] text-muted-foreground uppercase tracking-wide mb-0.5">{label}</div>
-                  <div className={`text-sm font-bold ${pos ? 'text-emerald-400' : 'text-red-400'}`}>{value}</div>
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
 
         {/* Description */}
         {company.description && (
