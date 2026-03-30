@@ -1,0 +1,92 @@
+import { db } from "./db";
+import { companies, projects, btmSources, projectCompanies, competitors, competitorNews } from "@shared/schema";
+import type { InsertCompany, Company, InsertProject, Project, InsertBtmSource, BtmSource, InsertProjectCompany, ProjectCompany, InsertCompetitor, Competitor, InsertCompetitorNews, CompetitorNews } from "@shared/schema";
+import { eq } from "drizzle-orm";
+
+export interface IStorage {
+  // Companies
+  getAllCompanies(): Company[];
+  getCompanyById(id: number): Company | undefined;
+  upsertCompany(data: InsertCompany): Company;
+
+  // Projects
+  getAllProjects(): Project[];
+  getProjectById(id: number): Project | undefined;
+  upsertProject(data: InsertProject): Project;
+
+  // BTM Sources
+  getBtmSourcesByProject(projectId: number): BtmSource[];
+  getAllBtmSources(): BtmSource[];
+
+  // Project Companies
+  getProjectCompaniesByProject(projectId: number): ProjectCompany[];
+  getAllProjectCompanies(): ProjectCompany[];
+
+  // Competitors
+  getAllCompetitors(): Competitor[];
+  getCompetitorById(id: number): Competitor | undefined;
+
+  // Competitor News
+  getNewsByCompetitor(competitorId: number): CompetitorNews[];
+  getAllCompetitorNews(): CompetitorNews[];
+}
+
+class SqliteStorage implements IStorage {
+  getAllCompanies(): Company[] {
+    return db.select().from(companies).all();
+  }
+
+  getCompanyById(id: number): Company | undefined {
+    return db.select().from(companies).where(eq(companies.id, id)).get();
+  }
+
+  upsertCompany(data: InsertCompany): Company {
+    return db.insert(companies).values(data).returning().get();
+  }
+
+  getAllProjects(): Project[] {
+    return db.select().from(projects).all();
+  }
+
+  getProjectById(id: number): Project | undefined {
+    return db.select().from(projects).where(eq(projects.id, id)).get();
+  }
+
+  upsertProject(data: InsertProject): Project {
+    return db.insert(projects).values(data).returning().get();
+  }
+
+  getBtmSourcesByProject(projectId: number): BtmSource[] {
+    return db.select().from(btmSources).where(eq(btmSources.projectId, projectId)).all();
+  }
+
+  getAllBtmSources(): BtmSource[] {
+    return db.select().from(btmSources).all();
+  }
+
+  getProjectCompaniesByProject(projectId: number): ProjectCompany[] {
+    return db.select().from(projectCompanies).where(eq(projectCompanies.projectId, projectId)).all();
+  }
+
+  getAllProjectCompanies(): ProjectCompany[] {
+    return db.select().from(projectCompanies).all();
+  }
+
+  getAllCompetitors(): Competitor[] {
+    return db.select().from(competitors).all();
+  }
+
+  getCompetitorById(id: number): Competitor | undefined {
+    return db.select().from(competitors).where(eq(competitors.id, id)).get();
+  }
+
+  getNewsByCompetitor(competitorId: number): CompetitorNews[] {
+    return db.select().from(competitorNews).where(eq(competitorNews.competitorId, competitorId)).all();
+  }
+
+  getAllCompetitorNews(): CompetitorNews[] {
+    return db.select().from(competitorNews).all();
+  }
+}
+
+export const storage = new SqliteStorage();

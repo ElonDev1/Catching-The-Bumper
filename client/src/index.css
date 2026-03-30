@@ -1,0 +1,282 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    /* Data/analytics palette — deep navy + electric blue accent */
+    --background: 220 16% 8%;
+    --foreground: 210 20% 92%;
+    --card: 220 14% 11%;
+    --card-foreground: 210 20% 92%;
+    --popover: 220 14% 11%;
+    --popover-foreground: 210 20% 92%;
+    --primary: 207 90% 54%;
+    --primary-foreground: 220 16% 8%;
+    --secondary: 220 12% 18%;
+    --secondary-foreground: 210 20% 80%;
+    --muted: 220 12% 16%;
+    --muted-foreground: 210 12% 52%;
+    --accent: 173 80% 40%;
+    --accent-foreground: 220 16% 8%;
+    --destructive: 0 62% 55%;
+    --destructive-foreground: 210 20% 92%;
+    --border: 220 10% 20%;
+    --input: 220 10% 20%;
+    --ring: 207 90% 54%;
+    --radius: 0.5rem;
+    --chart-1: 207 90% 54%;
+    --chart-2: 173 80% 40%;
+    --chart-3: 38 92% 58%;
+    --chart-4: 280 65% 60%;
+    --chart-5: 0 62% 55%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+    box-sizing: border-box;
+  }
+  body {
+    @apply bg-background text-foreground;
+    font-family: 'Inter', 'DM Sans', system-ui, sans-serif;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+  h1, h2, h3, h4, h5, h6 {
+    font-family: 'DM Sans', 'Inter', system-ui, sans-serif;
+    text-wrap: balance;
+    line-height: 1.2;
+  }
+  /* Tabular numerics for data */
+  .tabular { font-variant-numeric: tabular-nums lining-nums; }
+}
+
+/* Sidebar scrollbar */
+::-webkit-scrollbar { width: 4px; height: 4px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: hsl(220 10% 28%); border-radius: 999px; }
+
+/* Glowing accent line for active elements */
+.glow-blue { box-shadow: 0 0 0 1px hsl(207 90% 54% / 0.4), 0 0 16px hsl(207 90% 54% / 0.15); }
+
+/* Tech type pills */
+.tech-gas-turbine    { background: hsl(207 90% 54% / 0.15); color: hsl(207 90% 70%); }
+.tech-recip-engine   { background: hsl(38 92% 58% / 0.15); color: hsl(38 92% 72%); }
+.tech-fuel-cell      { background: hsl(173 80% 40% / 0.15); color: hsl(173 80% 62%); }
+.tech-nuclear-smr    { background: hsl(280 65% 60% / 0.15); color: hsl(280 65% 74%); }
+.tech-nuclear-existing { background: hsl(280 40% 50% / 0.15); color: hsl(280 40% 72%); }
+.tech-battery        { background: hsl(120 50% 45% / 0.15); color: hsl(120 50% 66%); }
+.tech-solar          { background: hsl(47 96% 53% / 0.15); color: hsl(47 96% 68%); }
+.tech-wind           { background: hsl(200 80% 50% / 0.15); color: hsl(200 80% 68%); }
+.tech-diesel         { background: hsl(0 0% 50% / 0.12); color: hsl(0 0% 68%); }
+
+/* Status badges */
+.status-announced       { background: hsl(38 92% 58% / 0.15); color: hsl(38 92% 72%); }
+.status-under_construction { background: hsl(207 90% 54% / 0.15); color: hsl(207 90% 70%); }
+.status-operational     { background: hsl(173 80% 40% / 0.15); color: hsl(173 80% 62%); }
+.status-planned         { background: hsl(0 0% 50% / 0.12); color: hsl(0 0% 68%); }
+
+/* Animated counter */
+@keyframes countUp {
+  from { opacity: 0; transform: translateY(8px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+.count-animate { animation: countUp 0.4s ease-out both; }
+
+/* Card hover */
+.project-card {
+  transition: border-color 0.18s ease, box-shadow 0.18s ease, transform 0.18s ease;
+}
+.project-card:hover {
+  border-color: hsl(207 90% 54% / 0.5);
+  box-shadow: 0 0 0 1px hsl(207 90% 54% / 0.2), 0 8px 24px hsl(220 16% 4% / 0.4);
+  transform: translateY(-1px);
+}
+
+/* Sidebar */
+.sidebar-item { transition: background 0.15s ease, color 0.15s ease; }
+.sidebar-item:hover { background: hsl(220 12% 18%); }
+.sidebar-item.active { background: hsl(207 90% 54% / 0.12); color: hsl(207 90% 70%); border-left: 2px solid hsl(207 90% 54%); }
+
+/* ================================================================
+   BLOOMBERG TERMINAL THEME
+   Pure terminal aesthetic — no radius, mono font, hard borders
+   ================================================================ */
+
+[data-theme="bloomberg"],
+[data-theme="bloomberg"] * {
+  border-radius: 0 !important;
+  box-shadow: none !important;
+}
+
+[data-theme="bloomberg"],
+[data-theme="bloomberg"] body {
+  font-family: 'Inter', 'DM Sans', system-ui, sans-serif !important;
+  font-size: 13.5px !important;
+  line-height: 1.6 !important;
+  letter-spacing: 0;
+  -webkit-font-smoothing: antialiased !important;
+}
+
+/* Body text — clean sans-serif for readability */
+[data-theme="bloomberg"] p,
+[data-theme="bloomberg"] li,
+[data-theme="bloomberg"] label {
+  font-family: 'Inter', 'DM Sans', system-ui, sans-serif !important;
+  font-size: 13px !important;
+  line-height: 1.6 !important;
+}
+
+/* Headings — uppercase mono for that terminal header feel */
+[data-theme="bloomberg"] h1,
+[data-theme="bloomberg"] h2,
+[data-theme="bloomberg"] h3 {
+  font-family: 'IBM Plex Mono', 'Courier New', monospace !important;
+  text-transform: uppercase !important;
+  letter-spacing: 0.1em !important;
+  font-weight: 700 !important;
+  font-size: 13px !important;
+}
+
+/* Sub-labels and metadata — mono */
+[data-theme="bloomberg"] h4,
+[data-theme="bloomberg"] h5,
+[data-theme="bloomberg"] h6 {
+  font-family: 'IBM Plex Mono', 'Courier New', monospace !important;
+  text-transform: uppercase !important;
+  letter-spacing: 0.08em !important;
+  font-weight: 600 !important;
+  font-size: 11px !important;
+}
+
+/* Numbers and data values stay mono */
+[data-theme="bloomberg"] .tabular,
+[data-theme="bloomberg"] [class*="text-2xl"],
+[data-theme="bloomberg"] [class*="text-3xl"],
+[data-theme="bloomberg"] [class*="text-4xl"] {
+  font-family: 'IBM Plex Mono', monospace !important;
+  letter-spacing: -0.01em !important;
+}
+
+/* Hard 1px borders on all cards and panels */
+[data-theme="bloomberg"] [class*="card"],
+[data-theme="bloomberg"] [class*="Card"],
+[data-theme="bloomberg"] aside,
+[data-theme="bloomberg"] nav {
+  border: 1px solid hsl(0 0% 22%) !important;
+}
+
+/* Sidebar — Bloomberg style */
+[data-theme="bloomberg"] .sidebar-item {
+  font-family: 'IBM Plex Mono', monospace !important;
+  font-size: 11px !important;
+  letter-spacing: 0.06em !important;
+  text-transform: uppercase !important;
+  border-radius: 0 !important;
+  padding: 6px 10px !important;
+  border-left: 3px solid transparent;
+  transition: none !important;
+}
+
+[data-theme="bloomberg"] .sidebar-item:hover {
+  background: hsl(0 0% 8%) !important;
+  color: #FF6600 !important;
+  border-left-color: #FF6600 !important;
+}
+
+[data-theme="bloomberg"] .sidebar-item.active {
+  background: hsl(24 100% 50% / 0.12) !important;
+  color: #FF6600 !important;
+  border-left: 3px solid #FF6600 !important;
+  font-weight: 700 !important;
+}
+
+/* Scrollbar — orange accent */
+[data-theme="bloomberg"] ::-webkit-scrollbar { width: 6px; height: 6px; }
+[data-theme="bloomberg"] ::-webkit-scrollbar-track { background: #000; }
+[data-theme="bloomberg"] ::-webkit-scrollbar-thumb { background: #FF6600; border-radius: 0 !important; }
+
+/* No card hover lift */
+[data-theme="bloomberg"] .project-card {
+  transition: border-color 0.1s ease !important;
+  transform: none !important;
+}
+[data-theme="bloomberg"] .project-card:hover {
+  border-color: #FF6600 !important;
+  transform: none !important;
+}
+
+/* Skeleton loaders — terminal style */
+[data-theme="bloomberg"] [class*="skeleton"],
+[data-theme="bloomberg"] [class*="Skeleton"] {
+  background: hsl(0 0% 10%) !important;
+  animation: none !important;
+}
+
+/* Input fields */
+[data-theme="bloomberg"] input,
+[data-theme="bloomberg"] textarea,
+[data-theme="bloomberg"] select {
+  font-family: 'IBM Plex Mono', monospace !important;
+  border-radius: 0 !important;
+  border: 1px solid hsl(0 0% 25%) !important;
+  background: hsl(0 0% 3%) !important;
+}
+[data-theme="bloomberg"] input:focus,
+[data-theme="bloomberg"] textarea:focus {
+  border-color: #FF6600 !important;
+  outline: none !important;
+}
+
+/* Badges and pills — square */
+[data-theme="bloomberg"] [class*="badge"],
+[data-theme="bloomberg"] [class*="Badge"],
+[data-theme="bloomberg"] [class*="pill"],
+[data-theme="bloomberg"] [class*="tag"] {
+  border-radius: 0 !important;
+  font-family: 'IBM Plex Mono', monospace !important;
+  font-size: 10px !important;
+  letter-spacing: 0.08em !important;
+  text-transform: uppercase !important;
+}
+
+/* Tables — terminal grid style */
+[data-theme="bloomberg"] table {
+  border-collapse: collapse !important;
+}
+[data-theme="bloomberg"] th {
+  background: hsl(0 0% 8%) !important;
+  color: #FF6600 !important;
+  font-size: 10px !important;
+  letter-spacing: 0.1em !important;
+  text-transform: uppercase !important;
+  border-bottom: 1px solid hsl(0 0% 25%) !important;
+}
+[data-theme="bloomberg"] td {
+  border-bottom: 1px solid hsl(0 0% 10%) !important;
+  font-size: 12px !important;
+}
+
+/* Positive / negative colors */
+[data-theme="bloomberg"] .text-emerald-400,
+[data-theme="bloomberg"] .text-green-400 { color: #00FF41 !important; }  /* terminal green */
+[data-theme="bloomberg"] .text-red-400,
+[data-theme="bloomberg"] .text-destructive { color: #FF3333 !important; }
+[data-theme="bloomberg"] .text-primary { color: #FF6600 !important; }
+[data-theme="bloomberg"] .text-amber-400 { color: #FFCC00 !important; }
+
+/* Section headers — Bloomberg orange bar style */
+[data-theme="bloomberg"] .border-b.border-border {
+  border-color: hsl(0 0% 20%) !important;
+}
+
+/* Button — square terminal buttons */
+[data-theme="bloomberg"] button {
+  border-radius: 0 !important;
+  font-family: 'IBM Plex Mono', monospace !important;
+  text-transform: uppercase !important;
+  letter-spacing: 0.06em !important;
+  font-size: 11px !important;
+}
