@@ -1,6 +1,6 @@
 import { db } from "./db";
-import { companies, projects, btmSources, projectCompanies, competitors, competitorNews } from "@shared/schema";
-import type { InsertCompany, Company, InsertProject, Project, InsertBtmSource, BtmSource, InsertProjectCompany, ProjectCompany, InsertCompetitor, Competitor, InsertCompetitorNews, CompetitorNews } from "@shared/schema";
+import { companies, projects, btmSources, projectCompanies } from "@shared/schema";
+import type { InsertCompany, Company, InsertProject, Project, InsertBtmSource, BtmSource, InsertProjectCompany, ProjectCompany } from "@shared/schema";
 import { eq } from "drizzle-orm";
 
 export interface IStorage {
@@ -21,14 +21,6 @@ export interface IStorage {
   // Project Companies
   getProjectCompaniesByProject(projectId: number): ProjectCompany[];
   getAllProjectCompanies(): ProjectCompany[];
-
-  // Competitors
-  getAllCompetitors(): Competitor[];
-  getCompetitorById(id: number): Competitor | undefined;
-
-  // Competitor News
-  getNewsByCompetitor(competitorId: number): CompetitorNews[];
-  getAllCompetitorNews(): CompetitorNews[];
 }
 
 class SqliteStorage implements IStorage {
@@ -70,22 +62,6 @@ class SqliteStorage implements IStorage {
 
   getAllProjectCompanies(): ProjectCompany[] {
     return db.select().from(projectCompanies).all();
-  }
-
-  getAllCompetitors(): Competitor[] {
-    return db.select().from(competitors).all();
-  }
-
-  getCompetitorById(id: number): Competitor | undefined {
-    return db.select().from(competitors).where(eq(competitors.id, id)).get();
-  }
-
-  getNewsByCompetitor(competitorId: number): CompetitorNews[] {
-    return db.select().from(competitorNews).where(eq(competitorNews.competitorId, competitorId)).all();
-  }
-
-  getAllCompetitorNews(): CompetitorNews[] {
-    return db.select().from(competitorNews).all();
   }
 }
 
