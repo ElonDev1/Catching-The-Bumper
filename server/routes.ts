@@ -114,13 +114,13 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
 
   // All companies
   app.get("/api/companies", (_req, res) => {
-    res.json(storage.getAllCompanies());
+    res.json(rawDb.prepare("SELECT * FROM companies ORDER BY name").all());
   });
 
   // Company detail with projects
   app.get("/api/companies/:id", (req, res) => {
     const id = parseInt(req.params.id);
-    const company = storage.getCompanyById(id);
+    const company = rawDb.prepare("SELECT * FROM companies WHERE id = ?").get(id) as any;
     if (!company) return res.status(404).json({ error: "Not found" });
 
     const allLinks = storage.getAllProjectCompanies();
