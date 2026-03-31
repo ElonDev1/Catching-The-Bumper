@@ -131,6 +131,69 @@ export default function CompanyDetail() {
           </div>
         )}
 
+        {/* Capital Structure — PitchBook */}
+        {(company.totalFundingM || company.employeeCount || company.keyInvestors || company.financingStatus) && (
+          <div className="bg-card border border-border rounded-xl p-4 mb-5">
+            <div className="flex items-center justify-between mb-3">
+              <div className="flex items-center gap-2">
+                <BarChart2 size={13} className="text-purple-400" />
+                <span className="text-xs font-semibold text-foreground uppercase tracking-wide">Capital Structure</span>
+              </div>
+              <div className="flex items-center gap-1.5">
+                <span className="text-[9px] text-muted-foreground">Source: PitchBook</span>
+                {company.pitchbookUpdatedDate && <span className="text-[9px] text-muted-foreground">· {company.pitchbookUpdatedDate}</span>}
+              </div>
+            </div>
+            <div className="grid grid-cols-3 gap-3 mb-3">
+              {[
+                { label: 'Total Funding', value: company.totalFundingM ? `$${company.totalFundingM >= 1000 ? (company.totalFundingM/1000).toFixed(1)+'B' : company.totalFundingM.toFixed(0)+'M'}` : '—' },
+                { label: 'Employees', value: company.employeeCount ? Number(company.employeeCount).toLocaleString() : '—' },
+                { label: 'Ownership', value: company.financingStatus ?? '—' },
+              ].map(({ label, value }) => (
+                <div key={label} className="bg-muted/30 rounded px-3 py-2">
+                  <div className="text-[9px] text-muted-foreground uppercase tracking-wide mb-0.5">{label}</div>
+                  <div className="text-xs font-bold text-foreground leading-snug">{value}</div>
+                </div>
+              ))}
+            </div>
+            {(company.lastDealType || company.prevDealType) && (
+              <div className="mb-3">
+                <div className="text-[9px] text-muted-foreground uppercase tracking-wide mb-1.5">Recent Deals</div>
+                <div className="space-y-1.5">
+                  {company.lastDealType && (
+                    <div className="flex items-center justify-between py-1.5 border-b border-border/50">
+                      <div className="flex items-center gap-2">
+                        <span className="text-[9px] font-medium px-1.5 py-0.5 rounded bg-primary/15 text-primary uppercase tracking-wide">{company.lastDealType}</span>
+                        {company.lastDealDate && <span className="text-[10px] text-muted-foreground">{company.lastDealDate}</span>}
+                      </div>
+                      <span className="text-xs font-bold text-foreground">{company.lastDealAmountM ? `$${company.lastDealAmountM >= 1000 ? (company.lastDealAmountM/1000).toFixed(1)+'B' : company.lastDealAmountM+'M'}` : 'Undisclosed'}</span>
+                    </div>
+                  )}
+                  {company.prevDealType && (
+                    <div className="flex items-center justify-between py-1.5">
+                      <div className="flex items-center gap-2">
+                        <span className="text-[9px] font-medium px-1.5 py-0.5 rounded bg-muted text-muted-foreground uppercase tracking-wide">{company.prevDealType}</span>
+                        {company.prevDealDate && <span className="text-[10px] text-muted-foreground">{company.prevDealDate}</span>}
+                      </div>
+                      <span className="text-xs font-bold text-foreground">{company.prevDealAmountM ? `$${company.prevDealAmountM >= 1000 ? (company.prevDealAmountM/1000).toFixed(1)+'B' : company.prevDealAmountM+'M'}` : 'Undisclosed'}</span>
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
+            {company.keyInvestors && (
+              <div>
+                <div className="text-[9px] text-muted-foreground uppercase tracking-wide mb-1">Key Investors / Backers</div>
+                <div className="flex flex-wrap gap-1">
+                  {company.keyInvestors.split(',').map((inv: string) => (
+                    <span key={inv} className="text-[9px] px-1.5 py-0.5 rounded bg-muted/50 text-muted-foreground border border-border">{inv.trim()}</span>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+        )}
+
         {/* Description */}
         {company.description && (
           <div className="bg-card border border-border rounded-xl p-4 mb-5">
