@@ -50,7 +50,10 @@ const updateComp = db.prepare(`UPDATE competitors SET
   last_deal_type=@last_deal_type, last_deal_amount_m=@last_deal_amount_m, last_deal_date=@last_deal_date,
   prev_deal_type=@prev_deal_type, prev_deal_amount_m=@prev_deal_amount_m, prev_deal_date=@prev_deal_date,
   key_investors=@key_investors, employee_count=@employee_count, employee_count_date=@employee_count_date,
-  financing_status=@financing_status, pitchbook_updated_date=@pitchbook_updated_date
+  financing_status=@financing_status, pitchbook_updated_date=@pitchbook_updated_date,
+  total_debt_b=@total_debt_b, net_debt_b=@net_debt_b, net_debt_ebitda=@net_debt_ebitda,
+  interest_coverage=@interest_coverage, sp_rating=@sp_rating, moodys_rating=@moodys_rating,
+  credit_tier=@credit_tier, credit_notes=@credit_notes, credit_data_date=@credit_data_date
   WHERE id=@id`);
 db.transaction(rows => rows.forEach(r => updateComp.run(r)))(SEED.competitors.map(c => ({
   id: c.id, stock_price: c.stock_price, market_cap_b: c.market_cap_b, revenue_ttm_m: c.revenue_ttm_m,
@@ -60,7 +63,10 @@ db.transaction(rows => rows.forEach(r => updateComp.run(r)))(SEED.competitors.ma
   last_deal_type: c.last_deal_type, last_deal_amount_m: c.last_deal_amount_m, last_deal_date: c.last_deal_date,
   prev_deal_type: c.prev_deal_type, prev_deal_amount_m: c.prev_deal_amount_m, prev_deal_date: c.prev_deal_date,
   key_investors: c.key_investors, employee_count: c.employee_count, employee_count_date: c.employee_count_date,
-  financing_status: c.financing_status, pitchbook_updated_date: c.pitchbook_updated_date
+  financing_status: c.financing_status, pitchbook_updated_date: c.pitchbook_updated_date,
+  total_debt_b: c.total_debt_b, net_debt_b: c.net_debt_b, net_debt_ebitda: c.net_debt_ebitda,
+  interest_coverage: c.interest_coverage, sp_rating: c.sp_rating, moodys_rating: c.moodys_rating,
+  credit_tier: c.credit_tier, credit_notes: c.credit_notes, credit_data_date: c.credit_data_date
 })));
 console.log('Competitors updated: ' + SEED.competitors.length);
 
@@ -73,7 +79,10 @@ const updateComp2 = db.prepare(`UPDATE companies SET
   last_deal_amount_m=@last_deal_amount_m, last_deal_date=@last_deal_date,
   prev_deal_type=@prev_deal_type, prev_deal_amount_m=@prev_deal_amount_m, prev_deal_date=@prev_deal_date,
   key_investors=@key_investors, employee_count=@employee_count, employee_count_date=@employee_count_date,
-  financing_status=@financing_status, pitchbook_updated_date=@pitchbook_updated_date
+  financing_status=@financing_status, pitchbook_updated_date=@pitchbook_updated_date,
+  total_debt_b=@total_debt_b, net_debt_b=@net_debt_b, net_debt_ebitda=@net_debt_ebitda,
+  interest_coverage=@interest_coverage, sp_rating=@sp_rating, moodys_rating=@moodys_rating,
+  credit_tier=@credit_tier, credit_notes=@credit_notes, credit_data_date=@credit_data_date
   WHERE id=@id`);
 db.transaction(rows => rows.forEach(r => updateComp2.run(r)))(SEED.companies.map(c => ({
   id: c.id, stock_price: c.stock_price, market_cap_b: c.market_cap_b, revenue_ttm_b: c.revenue_ttm_b,
@@ -83,7 +92,10 @@ db.transaction(rows => rows.forEach(r => updateComp2.run(r)))(SEED.companies.map
   last_deal_amount_m: c.last_deal_amount_m, last_deal_date: c.last_deal_date,
   prev_deal_type: c.prev_deal_type, prev_deal_amount_m: c.prev_deal_amount_m, prev_deal_date: c.prev_deal_date,
   key_investors: c.key_investors, employee_count: c.employee_count, employee_count_date: c.employee_count_date,
-  financing_status: c.financing_status, pitchbook_updated_date: c.pitchbook_updated_date
+  financing_status: c.financing_status, pitchbook_updated_date: c.pitchbook_updated_date,
+  total_debt_b: c.total_debt_b, net_debt_b: c.net_debt_b, net_debt_ebitda: c.net_debt_ebitda,
+  interest_coverage: c.interest_coverage, sp_rating: c.sp_rating, moodys_rating: c.moodys_rating,
+  credit_tier: c.credit_tier, credit_notes: c.credit_notes, credit_data_date: c.credit_data_date
 })));
 console.log('Companies updated: ' + SEED.companies.length);
 
