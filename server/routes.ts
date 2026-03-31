@@ -178,7 +178,7 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
 
   // All competitors
   app.get("/api/competitors", (_req, res) => {
-    const allCompetitors = storage.getAllCompetitors();
+    const allCompetitors = rawDb.prepare("SELECT * FROM competitors ORDER BY id").all() as any[];
     const allNews = storage.getAllCompetitorNews();
     const result = allCompetitors.map((c) => ({
       ...c,
@@ -194,7 +194,7 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
   // Single competitor with full news
   app.get("/api/competitors/:id", (req, res) => {
     const id = parseInt(req.params.id);
-    const competitor = storage.getCompetitorById(id);
+    const competitor = rawDb.prepare("SELECT * FROM competitors WHERE id = ?").get(id) as any;
     if (!competitor) return res.status(404).json({ error: "Not found" });
     const news = storage.getNewsByCompetitor(id).sort(
       (a, b) => (b.publishedDate ?? "").localeCompare(a.publishedDate ?? "")
