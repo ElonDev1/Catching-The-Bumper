@@ -5,6 +5,20 @@ import { rawDb } from "./db";
 import https from "https";
 import http from "http";
 
+// Convert snake_case keys to camelCase (deep, handles arrays and nested objects)
+function toCamel(obj: any): any {
+  if (Array.isArray(obj)) return obj.map(toCamel);
+  if (obj !== null && typeof obj === 'object') {
+    return Object.fromEntries(
+      Object.entries(obj).map(([k, v]) => [
+        k.replace(/_([a-z])/g, (_, c) => c.toUpperCase()),
+        toCamel(v)
+      ])
+    );
+  }
+  return obj;
+}
+
 // ── Perplexity search helper (used for live regulatory data) ────────────────
 function perplexitySearch(query: string): Promise<{ title: string; url: string; snippet: string; date?: string }[]> {
   return new Promise((resolve) => {
@@ -114,7 +128,7 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
 
   // All companies
   app.get("/api/companies", (_req, res) => {
-    res.json(rawDb.prepare("SELECT * FROM companies ORDER BY name").all());
+    res.json(toCamel(rawDb.prepare("SELECT * FROM companies ORDER BY name").all()));
   });
 
   // Company detail with projects
@@ -129,7 +143,7 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
     const operatedProjects = allProjects.filter((p) => p.operatorId === id);
     const linkedProjects = allProjects.filter((p) => projectIds.includes(p.id) && p.operatorId !== id);
 
-    res.json({ ...company, operatedProjects, linkedProjects });
+    res.json(toCamel({ ...company, operatedProjects, linkedProjects }));
   });
 
   // Aggregate stats for dashboard
@@ -180,10 +194,10 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
   app.get("/api/competitors", (_req, res) => {
     const allCompetitors = rawDb.prepare("SELECT * FROM competitors ORDER BY id").all() as any[];
     const allNews = storage.getAllCompetitorNews();
-    const result = allCompetitors.map((c) => ({
+    const result = allCompetitors.map((c) => toCamel({
       ...c,
-      newsCount: allNews.filter((n) => n.competitorId === c.id).length,
-      latestNews: allNews
+      news_count: allNews.filter((n) => n.competitorId === c.id).length,
+      latest_news: allNews
         .filter((n) => n.competitorId === c.id)
         .sort((a, b) => (b.publishedDate ?? "").localeCompare(a.publishedDate ?? ""))
         .slice(0, 1),
@@ -199,7 +213,7 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
     const news = storage.getNewsByCompetitor(id).sort(
       (a, b) => (b.publishedDate ?? "").localeCompare(a.publishedDate ?? "")
     );
-    res.json({ ...competitor, news });
+    res.json(toCamel({ ...competitor, news }));
   });
 
   // News for a competitor
