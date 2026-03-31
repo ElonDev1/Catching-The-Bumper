@@ -38,6 +38,55 @@ function seedTable(table, rows) {
 
 ['companies','projects','btm_sources','project_companies','competitors','competitor_news','rto_queue_snapshots','rto_large_load_queue','midstream_pipelines','midstream_shippers','midstream_signals'].forEach(t => seedTable(t, SEED[t]));
 
+// Always apply PitchBook + financial updates (even if rows already exist)
+console.log('Applying financial + PitchBook updates...');
+
+// Update competitors
+const updateComp = db.prepare(`UPDATE competitors SET
+  stock_price=@stock_price, market_cap_b=@market_cap_b, revenue_ttm_m=@revenue_ttm_m,
+  ebitda_ttm_m=@ebitda_ttm_m, net_income_ttm_m=@net_income_ttm_m, fcf_ttm_m=@fcf_ttm_m,
+  pe_ratio=@pe_ratio, ev_ebitda=@ev_ebitda, year_low=@year_low, year_high=@year_high,
+  fins_updated_date=@fins_updated_date, total_funding_m=@total_funding_m,
+  last_deal_type=@last_deal_type, last_deal_amount_m=@last_deal_amount_m, last_deal_date=@last_deal_date,
+  prev_deal_type=@prev_deal_type, prev_deal_amount_m=@prev_deal_amount_m, prev_deal_date=@prev_deal_date,
+  key_investors=@key_investors, employee_count=@employee_count, employee_count_date=@employee_count_date,
+  financing_status=@financing_status, pitchbook_updated_date=@pitchbook_updated_date
+  WHERE id=@id`);
+db.transaction(rows => rows.forEach(r => updateComp.run(r)))(SEED.competitors.map(c => ({
+  id: c.id, stock_price: c.stock_price, market_cap_b: c.market_cap_b, revenue_ttm_m: c.revenue_ttm_m,
+  ebitda_ttm_m: c.ebitda_ttm_m, net_income_ttm_m: c.net_income_ttm_m, fcf_ttm_m: c.fcf_ttm_m,
+  pe_ratio: c.pe_ratio, ev_ebitda: c.ev_ebitda, year_low: c.year_low, year_high: c.year_high,
+  fins_updated_date: c.fins_updated_date, total_funding_m: c.total_funding_m,
+  last_deal_type: c.last_deal_type, last_deal_amount_m: c.last_deal_amount_m, last_deal_date: c.last_deal_date,
+  prev_deal_type: c.prev_deal_type, prev_deal_amount_m: c.prev_deal_amount_m, prev_deal_date: c.prev_deal_date,
+  key_investors: c.key_investors, employee_count: c.employee_count, employee_count_date: c.employee_count_date,
+  financing_status: c.financing_status, pitchbook_updated_date: c.pitchbook_updated_date
+})));
+console.log('Competitors updated: ' + SEED.competitors.length);
+
+// Update companies
+const updateComp2 = db.prepare(`UPDATE companies SET
+  stock_price=@stock_price, market_cap_b=@market_cap_b, revenue_ttm_b=@revenue_ttm_b,
+  ebitda_ttm_b=@ebitda_ttm_b, net_income_ttm_b=@net_income_ttm_b, fcf_ttm_b=@fcf_ttm_b,
+  pe_ratio=@pe_ratio, fins_updated_date=@fins_updated_date,
+  total_funding_m=@total_funding_m, last_deal_type=@last_deal_type,
+  last_deal_amount_m=@last_deal_amount_m, last_deal_date=@last_deal_date,
+  prev_deal_type=@prev_deal_type, prev_deal_amount_m=@prev_deal_amount_m, prev_deal_date=@prev_deal_date,
+  key_investors=@key_investors, employee_count=@employee_count, employee_count_date=@employee_count_date,
+  financing_status=@financing_status, pitchbook_updated_date=@pitchbook_updated_date
+  WHERE id=@id`);
+db.transaction(rows => rows.forEach(r => updateComp2.run(r)))(SEED.companies.map(c => ({
+  id: c.id, stock_price: c.stock_price, market_cap_b: c.market_cap_b, revenue_ttm_b: c.revenue_ttm_b,
+  ebitda_ttm_b: c.ebitda_ttm_b, net_income_ttm_b: c.net_income_ttm_b, fcf_ttm_b: c.fcf_ttm_b,
+  pe_ratio: c.pe_ratio, fins_updated_date: c.fins_updated_date,
+  total_funding_m: c.total_funding_m, last_deal_type: c.last_deal_type,
+  last_deal_amount_m: c.last_deal_amount_m, last_deal_date: c.last_deal_date,
+  prev_deal_type: c.prev_deal_type, prev_deal_amount_m: c.prev_deal_amount_m, prev_deal_date: c.prev_deal_date,
+  key_investors: c.key_investors, employee_count: c.employee_count, employee_count_date: c.employee_count_date,
+  financing_status: c.financing_status, pitchbook_updated_date: c.pitchbook_updated_date
+})));
+console.log('Companies updated: ' + SEED.companies.length);
+
 db.close();
 console.log('DB setup complete');
 require('./dist/index.cjs');
