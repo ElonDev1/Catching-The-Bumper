@@ -106,7 +106,7 @@ console.log('Companies updated: ' + SEED.companies.length);
 
 // Always refresh news_articles (delete Enverus + reinsert from SEED)
 if (SEED.news_articles && SEED.news_articles.length > 0) {
-  try { db.exec('DELETE FROM news_articles WHERE source = 'Enverus Intelligence''); } catch(e) {}
+  try { db.exec("DELETE FROM news_articles WHERE source = 'Enverus Intelligence'"); } catch(e) {}
   const insNews = db.prepare('INSERT OR IGNORE INTO news_articles (id,headline,summary,url,source,published_date,category,tab) VALUES (?,?,?,?,?,?,?,?)');
   SEED.news_articles.forEach(a => insNews.run(a.id,a.headline,a.summary,a.url,a.source,a.published_date,a.category,a.tab));
   console.log('News articles refreshed: ' + SEED.news_articles.length);
