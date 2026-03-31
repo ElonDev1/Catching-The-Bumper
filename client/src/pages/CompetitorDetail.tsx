@@ -42,6 +42,19 @@ type CompetitorDetail = {
   yearLow: number | null;
   yearHigh: number | null;
   finsUpdatedDate: string | null;
+  // PitchBook fields
+  totalFundingM: number | null;
+  lastDealType: string | null;
+  lastDealAmountM: number | null;
+  lastDealDate: string | null;
+  prevDealType: string | null;
+  prevDealAmountM: number | null;
+  prevDealDate: string | null;
+  keyInvestors: string | null;
+  employeeCount: number | null;
+  employeeCountDate: string | null;
+  financingStatus: string | null;
+  pitchbookUpdatedDate: string | null;
   news: NewsItem[];
 };
 
@@ -285,6 +298,68 @@ export default function CompetitorDetail() {
                     </div>
                     <div className="h-1.5 bg-muted rounded-full overflow-hidden">
                       <div className="h-full bg-emerald-400 rounded-full" style={{ width: `${Math.min(100, ((data.stockPrice - data.yearLow) / (data.yearHigh - data.yearLow)) * 100)}%` }} />
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* Capital Structure — PitchBook */}
+            {(data.totalFundingM || data.employeeCount || data.keyInvestors || data.financingStatus) && (
+              <div className="border border-border rounded-lg p-4 mb-4">
+                <div className="flex items-center justify-between mb-3">
+                  <h3 className="text-xs font-semibold text-foreground uppercase tracking-wide">Capital Structure</h3>
+                  <div className="flex items-center gap-1.5">
+                    <span className="text-[9px] text-muted-foreground">Source: PitchBook</span>
+                    {data.pitchbookUpdatedDate && <span className="text-[9px] text-muted-foreground">· {data.pitchbookUpdatedDate}</span>}
+                  </div>
+                </div>
+                <div className="grid grid-cols-3 gap-3 mb-3">
+                  {[
+                    { label: 'Total Funding', value: data.totalFundingM ? `$${data.totalFundingM >= 1000 ? (data.totalFundingM/1000).toFixed(1)+'B' : data.totalFundingM.toFixed(0)+'M'}` : '—' },
+                    { label: 'Employees', value: data.employeeCount ? data.employeeCount.toLocaleString() : '—' },
+                    { label: 'Ownership', value: data.financingStatus ?? '—' },
+                  ].map(({ label, value }) => (
+                    <div key={label} className="bg-muted/30 rounded px-2.5 py-2">
+                      <div className="text-[9px] text-muted-foreground uppercase tracking-wide mb-0.5">{label}</div>
+                      <div className="text-xs font-bold text-foreground leading-snug">{value}</div>
+                    </div>
+                  ))}
+                </div>
+                {/* Deal history */}
+                {(data.lastDealType || data.prevDealType) && (
+                  <div className="mb-3">
+                    <div className="text-[9px] text-muted-foreground uppercase tracking-wide mb-1.5">Recent Deals</div>
+                    <div className="space-y-1.5">
+                      {data.lastDealType && (
+                        <div className="flex items-center justify-between py-1.5 border-b border-border/50">
+                          <div className="flex items-center gap-2">
+                            <span className="text-[9px] font-medium px-1.5 py-0.5 rounded bg-primary/15 text-primary uppercase tracking-wide">{data.lastDealType}</span>
+                            {data.lastDealDate && <span className="text-[10px] text-muted-foreground">{data.lastDealDate}</span>}
+                          </div>
+                          <span className="text-xs font-bold text-foreground">{data.lastDealAmountM ? `$${data.lastDealAmountM >= 1000 ? (data.lastDealAmountM/1000).toFixed(1)+'B' : data.lastDealAmountM+'M'}` : 'Undisclosed'}</span>
+                        </div>
+                      )}
+                      {data.prevDealType && (
+                        <div className="flex items-center justify-between py-1.5">
+                          <div className="flex items-center gap-2">
+                            <span className="text-[9px] font-medium px-1.5 py-0.5 rounded bg-muted text-muted-foreground uppercase tracking-wide">{data.prevDealType}</span>
+                            {data.prevDealDate && <span className="text-[10px] text-muted-foreground">{data.prevDealDate}</span>}
+                          </div>
+                          <span className="text-xs font-bold text-foreground">{data.prevDealAmountM ? `$${data.prevDealAmountM >= 1000 ? (data.prevDealAmountM/1000).toFixed(1)+'B' : data.prevDealAmountM+'M'}` : 'Undisclosed'}</span>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                )}
+                {/* Investors */}
+                {data.keyInvestors && (
+                  <div>
+                    <div className="text-[9px] text-muted-foreground uppercase tracking-wide mb-1">Key Investors / Backers</div>
+                    <div className="flex flex-wrap gap-1">
+                      {data.keyInvestors.split(',').map(inv => (
+                        <span key={inv} className="text-[9px] px-1.5 py-0.5 rounded bg-muted/50 text-muted-foreground border border-border">{inv.trim()}</span>
+                      ))}
                     </div>
                   </div>
                 )}
