@@ -288,7 +288,7 @@ const lenders = [
   [15, 'BMO Capital Markets', 'BMO', 'canadian_bank', 'Toronto, Canada', 'Canada', 'https://www.bmo.com', 'Joint bookrunner on VoltaGrid $3B ABL revolving credit facility (Nov 2025). Active in syndicated DC infrastructure lending.', 'BMO', null, 15],
 ];
 
-const existingLenders = db.prepare('SELECT COUNT(*) as cnt FROM financing_lenders').get() as { cnt: number };
+const existingLenders = db.prepare('SELECT COUNT(*) as cnt FROM financing_lenders').get();
 if (existingLenders.cnt === 0) {
   for (const l of lenders) lenderInsert.run(...l);
   console.log(`Seeded ${lenders.length} financing lenders`);
@@ -438,7 +438,7 @@ const deals = [
    'Yahoo Finance (Business Wire mirror)', 'https://finance.yahoo.com/news/solaris-energy-infrastructure-announces-900-213100198.html'],
 ];
 
-const existingDeals = db.prepare('SELECT COUNT(*) as cnt FROM financing_deals').get() as { cnt: number };
+const existingDeals = db.prepare('SELECT COUNT(*) as cnt FROM financing_deals').get();
 if (existingDeals.cnt === 0) {
   for (const d of deals) dealInsert.run(...d);
   console.log(`Seeded ${deals.length} financing deals`);
@@ -458,7 +458,7 @@ const activities = [
   [5, 6, 2025, null, null, 0, null, 109, 'Citigroup 109% YoY growth in DC project finance volume per Infralogic 2025 rankings.', 'ION Analytics / Infralogic Project Finance Rankings 2025', 'https://ionanalytics.com/insights/infralogic/data-center-boom-sees-explosion-in-bulge-bracket-project-finance/'],
 ];
 
-const existingActivity = db.prepare('SELECT COUNT(*) as cnt FROM lender_activity').get() as { cnt: number };
+const existingActivity = db.prepare('SELECT COUNT(*) as cnt FROM lender_activity').get();
 if (existingActivity.cnt === 0) {
   for (const a of activities) activityInsert.run(...a);
   console.log(`Seeded ${activities.length} lender activity records`);
