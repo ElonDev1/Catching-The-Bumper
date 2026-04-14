@@ -30,6 +30,15 @@ const tables = [
 ];
 tables.forEach(sql => db.exec(sql));
 
+// Always refresh financing tables so seed data is never stale on Render redeploys
+db.exec('DROP TABLE IF EXISTS lender_activity');
+db.exec('DROP TABLE IF EXISTS financing_deals');
+db.exec('DROP TABLE IF EXISTS financing_lenders');
+db.exec(`CREATE TABLE financing_lenders (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT NOT NULL, short_name TEXT, type TEXT NOT NULL, hq TEXT, country TEXT DEFAULT 'USA', website TEXT, description TEXT, logo_initials TEXT, company_id INTEGER, sort_order INTEGER DEFAULT 99)`);
+db.exec(`CREATE TABLE financing_deals (id INTEGER PRIMARY KEY AUTOINCREMENT, project_name TEXT NOT NULL, project_id INTEGER, borrower TEXT NOT NULL, lead_lenders TEXT NOT NULL, all_lenders TEXT, deal_type TEXT NOT NULL, amount_mm REAL NOT NULL, currency TEXT DEFAULT 'USD', sofr_spread_bps INTEGER, close_date TEXT, status TEXT NOT NULL DEFAULT 'closed', btm_specific INTEGER DEFAULT 0, btm_mw REAL, btm_tech TEXT, structure_notes TEXT, source_label TEXT NOT NULL, source_url TEXT NOT NULL, source_2_label TEXT, source_2_url TEXT)`);
+db.exec(`CREATE TABLE lender_activity (id INTEGER PRIMARY KEY AUTOINCREMENT, lender_id INTEGER NOT NULL, year INTEGER NOT NULL, total_dc_volume_bn REAL, dc_deal_count INTEGER, btm_specific INTEGER DEFAULT 0, rank_infralogic INTEGER, yoy_growth_pct REAL, notes TEXT, source_label TEXT, source_url TEXT)`);
+console.log('Financing tables dropped and recreated for fresh seed');
+
 const alters = ['ALTER TABLE companies ADD COLUMN stock_price REAL','ALTER TABLE companies ADD COLUMN market_cap_b REAL','ALTER TABLE companies ADD COLUMN revenue_ttm_b REAL','ALTER TABLE companies ADD COLUMN ebitda_ttm_b REAL','ALTER TABLE companies ADD COLUMN net_income_ttm_b REAL','ALTER TABLE companies ADD COLUMN fcf_ttm_b REAL','ALTER TABLE companies ADD COLUMN pe_ratio REAL','ALTER TABLE companies ADD COLUMN fins_updated_date TEXT','ALTER TABLE companies ADD COLUMN total_funding_m REAL','ALTER TABLE companies ADD COLUMN last_deal_type TEXT','ALTER TABLE companies ADD COLUMN last_deal_amount_m REAL','ALTER TABLE companies ADD COLUMN last_deal_date TEXT','ALTER TABLE companies ADD COLUMN prev_deal_type TEXT','ALTER TABLE companies ADD COLUMN prev_deal_amount_m REAL','ALTER TABLE companies ADD COLUMN prev_deal_date TEXT','ALTER TABLE companies ADD COLUMN key_investors TEXT','ALTER TABLE companies ADD COLUMN employee_count INTEGER','ALTER TABLE companies ADD COLUMN employee_count_date TEXT','ALTER TABLE companies ADD COLUMN financing_status TEXT','ALTER TABLE companies ADD COLUMN pitchbook_updated_date TEXT','ALTER TABLE projects ADD COLUMN lat REAL','ALTER TABLE projects ADD COLUMN lng REAL','ALTER TABLE competitors ADD COLUMN total_funding_m REAL','ALTER TABLE competitors ADD COLUMN last_deal_type TEXT','ALTER TABLE competitors ADD COLUMN last_deal_amount_m REAL','ALTER TABLE competitors ADD COLUMN last_deal_date TEXT','ALTER TABLE competitors ADD COLUMN prev_deal_type TEXT','ALTER TABLE competitors ADD COLUMN prev_deal_amount_m REAL','ALTER TABLE competitors ADD COLUMN prev_deal_date TEXT','ALTER TABLE competitors ADD COLUMN key_investors TEXT','ALTER TABLE competitors ADD COLUMN employee_count INTEGER','ALTER TABLE competitors ADD COLUMN employee_count_date TEXT','ALTER TABLE competitors ADD COLUMN financing_status TEXT','ALTER TABLE competitors ADD COLUMN pitchbook_updated_date TEXT','ALTER TABLE companies ADD COLUMN total_debt_b REAL','ALTER TABLE companies ADD COLUMN net_debt_b REAL','ALTER TABLE companies ADD COLUMN net_debt_ebitda REAL','ALTER TABLE companies ADD COLUMN interest_coverage REAL','ALTER TABLE companies ADD COLUMN sp_rating TEXT','ALTER TABLE companies ADD COLUMN moodys_rating TEXT','ALTER TABLE companies ADD COLUMN credit_tier TEXT','ALTER TABLE companies ADD COLUMN credit_notes TEXT','ALTER TABLE companies ADD COLUMN credit_data_date TEXT','ALTER TABLE competitors ADD COLUMN total_debt_b REAL','ALTER TABLE competitors ADD COLUMN net_debt_b REAL','ALTER TABLE competitors ADD COLUMN net_debt_ebitda REAL','ALTER TABLE competitors ADD COLUMN interest_coverage REAL','ALTER TABLE competitors ADD COLUMN sp_rating TEXT','ALTER TABLE competitors ADD COLUMN moodys_rating TEXT','ALTER TABLE competitors ADD COLUMN credit_tier TEXT','ALTER TABLE competitors ADD COLUMN credit_notes TEXT','ALTER TABLE competitors ADD COLUMN credit_data_date TEXT','ALTER TABLE btm_vendors ADD COLUMN tech_id INTEGER','ALTER TABLE btm_vendors ADD COLUMN lead_time_notes TEXT','ALTER TABLE btm_vendors ADD COLUMN sources TEXT','ALTER TABLE btm_vendor_deployments ADD COLUMN source_label TEXT'];
 alters.forEach(cmd => { try { db.exec(cmd); } catch(e) {} });
 
@@ -288,11 +297,8 @@ const lenders = [
   [15, 'BMO Capital Markets', 'BMO', 'canadian_bank', 'Toronto, Canada', 'Canada', 'https://www.bmo.com', 'Joint bookrunner on VoltaGrid $3B ABL revolving credit facility (Nov 2025). Active in syndicated DC infrastructure lending.', 'BMO', null, 15],
 ];
 
-const existingLenders = db.prepare('SELECT COUNT(*) as cnt FROM financing_lenders').get();
-if (existingLenders.cnt === 0) {
-  for (const l of lenders) lenderInsert.run(...l);
-  console.log(`Seeded ${lenders.length} financing lenders`);
-}
+for (const l of lenders) lenderInsert.run(...l);
+console.log(`Seeded ${lenders.length} financing lenders`);
 
 // ── DEALS ──────────────────────────────────────────────────────────────────
 const dealInsert = db.prepare(`INSERT OR IGNORE INTO financing_deals
@@ -438,11 +444,8 @@ const deals = [
    'Yahoo Finance (Business Wire mirror)', 'https://finance.yahoo.com/news/solaris-energy-infrastructure-announces-900-213100198.html'],
 ];
 
-const existingDeals = db.prepare('SELECT COUNT(*) as cnt FROM financing_deals').get();
-if (existingDeals.cnt === 0) {
-  for (const d of deals) dealInsert.run(...d);
-  console.log(`Seeded ${deals.length} financing deals`);
-}
+for (const d of deals) dealInsert.run(...d);
+console.log(`Seeded ${deals.length} financing deals`);
 
 // ── LENDER ACTIVITY (league table) ───────────────────────────────────────
 const activityInsert = db.prepare(`INSERT OR IGNORE INTO lender_activity
@@ -458,11 +461,8 @@ const activities = [
   [5, 6, 2025, null, null, 0, null, 109, 'Citigroup 109% YoY growth in DC project finance volume per Infralogic 2025 rankings.', 'ION Analytics / Infralogic Project Finance Rankings 2025', 'https://ionanalytics.com/insights/infralogic/data-center-boom-sees-explosion-in-bulge-bracket-project-finance/'],
 ];
 
-const existingActivity = db.prepare('SELECT COUNT(*) as cnt FROM lender_activity').get();
-if (existingActivity.cnt === 0) {
-  for (const a of activities) activityInsert.run(...a);
-  console.log(`Seeded ${activities.length} lender activity records`);
-}
+for (const a of activities) activityInsert.run(...a);
+console.log(`Seeded ${activities.length} lender activity records`);
 
 db.close();
 console.log('DB setup complete');
