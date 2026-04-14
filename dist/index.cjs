@@ -747,6 +747,20 @@ async function registerRoutes(httpServer2, app2) {
     `).all();
     res.json(signals);
   });
+  app2.get("/api/news", (req, res) => {
+    const tab = req.query.tab;
+    const limit = parseInt(req.query.limit || "200", 10);
+    let query = "SELECT * FROM news_articles";
+    const params = [];
+    if (tab) {
+      query += " WHERE tab = ?";
+      params.push(tab);
+    }
+    query += " ORDER BY published_date DESC LIMIT ?";
+    params.push(limit);
+    const articles = rawDb.prepare(query).all(...params);
+    res.json(articles);
+  });
   app2.get("/api/financing/deals", (_req, res) => {
     const deals = rawDb.prepare("SELECT * FROM financing_deals ORDER BY amount_mm DESC").all();
     res.json(deals);

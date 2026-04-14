@@ -19,23 +19,23 @@ export const THEMES: Theme[] = [
     description: "Black terminal with Bloomberg orange — data-dense",
     preview: { bg: "#000000", accent: "#FF6600", card: "#0a0a0a" },
     vars: {
-      "--background":            "0 0% 0%",        // pure black
-      "--foreground":            "0 0% 96%",        // bright near-white text
-      "--card":                  "0 0% 4%",         // very dark card
+      "--background":            "0 0% 0%",
+      "--foreground":            "0 0% 96%",
+      "--card":                  "0 0% 4%",
       "--card-foreground":       "0 0% 92%",
       "--popover":               "0 0% 4%",
       "--popover-foreground":    "0 0% 92%",
-      "--primary":               "24 100% 50%",     // Bloomberg orange #FF6600
+      "--primary":               "24 100% 50%",
       "--primary-foreground":    "0 0% 0%",
       "--secondary":             "0 0% 10%",
       "--secondary-foreground":  "0 0% 70%",
       "--muted":                 "0 0% 8%",
-      "--muted-foreground":      "0 0% 55%",        // more readable muted text
-      "--accent":                "60 100% 50%",     // yellow for highlights
+      "--muted-foreground":      "0 0% 55%",
+      "--accent":                "60 100% 50%",
       "--accent-foreground":     "0 0% 0%",
       "--destructive":           "0 84% 52%",
       "--destructive-foreground":"0 0% 92%",
-      "--border":                "0 0% 16%",        // visible but subtle borders
+      "--border":                "0 0% 16%",
       "--input":                 "0 0% 16%",
       "--ring":                  "24 100% 50%",
     },
@@ -46,19 +46,19 @@ export const THEMES: Theme[] = [
     description: "GPC Infrastructure brand — deep teal & cyan",
     preview: { bg: "#04454B", accent: "#01747B", card: "#04454B" },
     vars: {
-      "--background":            "183 90% 10%",   // #04454B deep teal
-      "--foreground":            "0 0% 96%",       // near-white
-      "--card":                  "184 84% 14%",   // slightly lighter than bg
+      "--background":            "183 90% 10%",
+      "--foreground":            "0 0% 96%",
+      "--card":                  "184 84% 14%",
       "--card-foreground":       "0 0% 96%",
       "--popover":               "184 84% 14%",
       "--popover-foreground":    "0 0% 96%",
-      "--primary":               "183 98% 24%",   // #01747B brand teal
+      "--primary":               "183 98% 24%",
       "--primary-foreground":    "0 0% 100%",
-      "--secondary":             "184 30% 22%",   // #407277 mid teal
+      "--secondary":             "184 30% 22%",
       "--secondary-foreground":  "0 0% 85%",
       "--muted":                 "184 40% 16%",
       "--muted-foreground":      "184 20% 58%",
-      "--accent":                "184 40% 60%",   // #72BBC1 light cyan accent
+      "--accent":                "184 40% 60%",
       "--accent-foreground":     "183 90% 10%",
       "--destructive":           "0 72% 51%",
       "--destructive-foreground":"0 0% 96%",
@@ -206,8 +206,10 @@ export const THEMES: Theme[] = [
 
 export const DEFAULT_THEME: ThemeId = "gpc";
 
+const LS_KEY = "dc-intel-theme";
+
 export function applyTheme(themeId: ThemeId) {
-  const theme = THEMES.find(t => t.id === themeId) ?? THEMES[0];
+  const theme = THEMES.find(t => t.id === themeId) ?? THEMES.find(t => t.id === DEFAULT_THEME)!;
   const root = document.documentElement;
   Object.entries(theme.vars).forEach(([key, val]) => {
     root.style.setProperty(key, val);
@@ -215,15 +217,16 @@ export function applyTheme(themeId: ThemeId) {
   root.setAttribute('data-theme', themeId);
 }
 
-// In-memory theme state (survives navigation, resets on page refresh)
-// This is intentional — the app is served in a sandboxed iframe where
-// localStorage and sessionStorage are unavailable.
-let _currentTheme: ThemeId = DEFAULT_THEME;
-
 export function getStoredTheme(): ThemeId {
-  return _currentTheme;
+  try {
+    const saved = localStorage.getItem(LS_KEY) as ThemeId | null;
+    if (saved && THEMES.some(t => t.id === saved)) return saved;
+  } catch {}
+  return DEFAULT_THEME;
 }
 
 export function storeTheme(themeId: ThemeId) {
-  _currentTheme = themeId;
+  try {
+    localStorage.setItem(LS_KEY, themeId);
+  } catch {}
 }

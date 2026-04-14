@@ -363,6 +363,12 @@ export default function NewsPage() {
     queryFn: () => apiRequest("GET", "/api/competitors").then(r => r.json()),
   });
 
+  // Fetch live news_articles from DB (seeded by start.cjs on each Render deploy)
+  const { data: dbNewsRaw } = useQuery({
+    queryKey: ["/api/news"],
+    queryFn: () => apiRequest("GET", "/api/news").then(r => r.json()),
+  });
+
   // Include competitor IDs in the queryKey so this refires once competitors load
   const competitorIds = competitors ? (competitors as any[]).map((c: any) => c.id).join(",") : "";
   const { data: allCompNewsRaw } = useQuery({
@@ -445,6 +451,23 @@ export default function NewsPage() {
       }
     }
 
+    // ── DB news_articles (live seed, refreshed on each Render deploy) ────────
+    if (dbNewsRaw && Array.isArray(dbNewsRaw)) {
+      for (const n of dbNewsRaw) {
+        const tab = n.tab as NewsItem["tab"];
+        if (!map[tab]) continue;
+        map[tab].push({
+          id: `db-${n.id}`,
+          tab,
+          date: n.published_date ?? "",
+          headline: n.headline ?? "",
+          summary: n.summary ?? "",
+          category: n.category ?? "other",
+          url: n.url ?? undefined,
+        });
+      }
+    }
+
     // ── Financing static items ────────────────────────────────────────────────
     FINANCING_ITEMS_STATIC.forEach((item, i) =>
       map.financing.push({ id: `fin-static-${i}`, ...item })
@@ -480,7 +503,7 @@ export default function NewsPage() {
     }
 
     return map;
-  }, [projects, allCompNewsRaw]);
+  }, [projects, allCompNewsRaw, dbNewsRaw]);
 
   const totalItems = Object.values(columnItems).reduce((s, arr) => s + arr.length, 0);
 

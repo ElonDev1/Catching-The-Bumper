@@ -495,6 +495,22 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
     res.json(signals);
   });
 
+// ── NEWS ARTICLES — served from DB seed ────────────────────────────────────
+  app.get("/api/news", (req, res) => {
+    const tab = req.query.tab as string | undefined;
+    const limit = parseInt((req.query.limit as string) || "200", 10);
+    let query = "SELECT * FROM news_articles";
+    const params: any[] = [];
+    if (tab) {
+      query += " WHERE tab = ?";
+      params.push(tab);
+    }
+    query += " ORDER BY published_date DESC LIMIT ?";
+    params.push(limit);
+    const articles = rawDb.prepare(query).all(...params);
+    res.json(articles);
+  });
+
 // ── FINANCING ROUTES — paste into server/routes.ts before the `return httpServer;` line ──
 
   // ── Financing deals ──────────────────────────────────────────────────────
