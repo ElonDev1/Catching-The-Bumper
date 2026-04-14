@@ -1,5 +1,5 @@
 import { Link, useLocation } from "wouter";
-import { Building2, Zap, Home, Swords, Activity, Map, Newspaper, ListOrdered, Settings2, Code2, GitBranch } from "lucide-react";
+import { Building2, Zap, Home, Swords, Activity, Map, Newspaper, ListOrdered, Settings2, Code2, GitBranch, DollarSign } from "lucide-react";
 import { PerplexityAttribution } from "@/components/PerplexityAttribution";
 import GlobalSearch from "@/components/GlobalSearch";
 import { getStoredTheme } from "@/lib/themes";
@@ -15,6 +15,7 @@ const navItems = [
   { href: "/macro",       label: "Federal / RTO",   short: "RTO",    key: "F7",  icon: Activity    },
   { href: "/map",         label: "Map",             short: "MAP",    key: "F8",  icon: Map         },
   { href: "/midstream",   label: "Midstream",        short: "MIDS",   key: "F9",  icon: GitBranch   },
+  { href: "/financing",  label: "Financing",        short: "FIN",    key: "F11", icon: DollarSign  },
   { href: "/dev",         label: "Dev Backend — CS",short: "DEV",   key: "F10", icon: Code2       },
 ];
 
