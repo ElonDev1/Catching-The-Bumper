@@ -189,6 +189,20 @@ if (SEED.rto_regulatory && SEED.rto_regulatory.length > 0) {
   console.log('RTO regulatory data seeded:', SEED.rto_regulatory.length);
 }
 
+// Always update btm_vendors with tech_id, lead_time_notes, sources (these columns were added after initial seed)
+if (SEED.btm_vendors && SEED.btm_vendors.length > 0) {
+  const updVendor = db.prepare('UPDATE btm_vendors SET tech_id=?, lead_time_notes=?, sources=?, tech_type=?, lead_time_weeks=? WHERE id=?');
+  SEED.btm_vendors.forEach(v => updVendor.run(v.tech_id ?? null, v.lead_time_notes ?? null, v.sources ?? null, v.tech_type ?? null, v.lead_time_weeks ?? null, v.id));
+  console.log('btm_vendors updated:', SEED.btm_vendors.length);
+}
+
+// Always update btm_vendor_deployments with source_label
+if (SEED.btm_vendor_deployments && SEED.btm_vendor_deployments.length > 0) {
+  const updDep = db.prepare('UPDATE btm_vendor_deployments SET source_url=?, source_label=? WHERE id=?');
+  SEED.btm_vendor_deployments.forEach(d => updDep.run(d.source_url ?? null, d.source_label ?? null, d.id));
+  console.log('btm_vendor_deployments updated:', SEED.btm_vendor_deployments.length);
+}
+
 // Always refresh gas hub prices (delete + reinsert from SEED)
 if (SEED.gas_hub_prices && SEED.gas_hub_prices.length > 0) {
   try { db.exec('DELETE FROM gas_hub_prices'); } catch(e) { console.log('gas_hub_prices not yet created, will be seeded fresh'); }
