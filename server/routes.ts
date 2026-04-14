@@ -495,5 +495,56 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
     res.json(signals);
   });
 
+// ── FINANCING ROUTES — paste into server/routes.ts before the `return httpServer;` line ──
+
+  // ── Financing deals ──────────────────────────────────────────────────────
+  app.get("/api/financing/deals", (_req, res) => {
+    const deals = rawDb.prepare("SELECT * FROM financing_deals ORDER BY amount_mm DESC").all();
+    res.json(deals);
+  });
+
+  // ── Financing lenders ────────────────────────────────────────────────────
+  app.get("/api/financing/lenders", (_req, res) => {
+    const lenders = rawDb.prepare("SELECT * FROM financing_lenders ORDER BY sort_order ASC").all();
+    res.json(lenders);
+  });
+
+  // ── Lender activity / league table ──────────────────────────────────────
+  app.get("/api/financing/activity", (_req, res) => {
+    const activity = rawDb.prepare("SELECT * FROM lender_activity ORDER BY lender_id, year DESC").all();
+    res.json(activity);
+  });
+
+  // ── Single lender with deals ──────────────────────────────────────────────
+  app.get("/api/financing/lenders/:id", (req, res) => {
+    const id = parseInt(req.params.id);
+    const lender = rawDb.prepare("SELECT * FROM financing_lenders WHERE id = ?").get(id);
+    if (!lender) return res.status(404).json({ error: "Not found" });
+    const activity = rawDb.prepare("SELECT * FROM lender_activity WHERE lender_id = ?").all(id);
+    res.json({ ...lender, activity });
+  });
+
+  // ── Financing stats (for market overview) ──────────────────────────────
+  app.get("/api/financing/stats", (_req, res) => {
+    const totals = rawDb.prepare(`
+      SELECT
+        SUM(amount_mm) / 1000.0 as total_tracked_bn,
+        COUNT(*) as deal_count,
+        SUM(CASE WHEN btm_specific = 1 THEN 1 ELSE 0 END) as btm_deal_count,
+        SUM(CASE WHEN btm_specific = 1 THEN amount_mm ELSE 0 END) / 1000.0 as btm_volume_bn,
+        MAX(amount_mm) as largest_deal_mm
+      FROM financing_deals
+    `).get() as any;
+
+    const largestDeal = rawDb.prepare(
+      "SELECT project_name FROM financing_deals ORDER BY amount_mm DESC LIMIT 1"
+    ).get() as any;
+
+    res.json({
+      ...totals,
+      largest_deal_name: largestDeal?.project_name ?? "—",
+    });
+  });
+
   return httpServer;
 }
