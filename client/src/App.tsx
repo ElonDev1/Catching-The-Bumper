@@ -17,6 +17,7 @@ import QueueIntelligence from "@/pages/QueueIntelligence";
 import Settings from "@/pages/Settings";
 import DevBackend from "@/pages/DevBackend";
 import MidstreamOpportunity from "@/pages/MidstreamOpportunity";
+import FinancingPage from "@/pages/FinancingPage";
 import NotFound from "@/pages/not-found";
 import { useEffect } from "react";
 import { applyTheme, getStoredTheme } from "@/lib/themes";
@@ -42,6 +43,7 @@ export default function App() {
           <Route path="/macro" component={MacroPower} />
           <Route path="/map" component={MapView} />
           <Route path="/midstream" component={MidstreamOpportunity} />
+          <Route path="/financing" component={FinancingPage} />
           <Route path="/dev" component={DevBackend} />
           <Route component={NotFound} />
         </Switch>
