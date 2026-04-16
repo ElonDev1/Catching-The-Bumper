@@ -191,6 +191,20 @@ if (SEED.rto_regulatory && SEED.rto_regulatory.length > 0) {
   console.log('RTO regulatory data seeded:', SEED.rto_regulatory.length);
 }
 
+// Always seed air_permit_state_ref and air_permits from SEED
+if (SEED.air_permit_state_ref && SEED.air_permit_state_ref.length > 0) {
+  db.exec('DELETE FROM air_permit_state_ref');
+  const insAPS = db.prepare('INSERT INTO air_permit_state_ref (id,state_code,state_name,agency_name,portal_url,typical_minor_months_low,typical_minor_months_high,typical_titlev_months_low,typical_titlev_months_high,ozone_attainment_status,pm25_attainment_status,recent_guidance,queue_congestion,last_updated) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?)');
+  SEED.air_permit_state_ref.forEach(r => insAPS.run(r.id,r.state_code,r.state_name,r.agency_name,r.portal_url??null,r.typical_minor_months_low??null,r.typical_minor_months_high??null,r.typical_titlev_months_low??null,r.typical_titlev_months_high??null,r.ozone_attainment_status??null,r.pm25_attainment_status??null,r.recent_guidance??null,r.queue_congestion??null,r.last_updated??null));
+  console.log('air_permit_state_ref seeded:', SEED.air_permit_state_ref.length);
+}
+if (SEED.air_permits && SEED.air_permits.length > 0) {
+  db.exec('DELETE FROM air_permits');
+  const insAP = db.prepare('INSERT INTO air_permits (id,project_id,facility_name,state,county,attainment_status,primary_tech,estimated_pte_nox_tpy,estimated_pte_co_tpy,permit_type,permit_status,permit_number,issue_date,lead_time_months,complexity_rating,docket_url,echo_pgm_sys_id,data_source,last_verified,notes) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)');
+  SEED.air_permits.forEach(r => insAP.run(r.id,r.project_id??null,r.facility_name,r.state,r.county??null,r.attainment_status??null,r.primary_tech??null,r.estimated_pte_nox_tpy??null,r.estimated_pte_co_tpy??null,r.permit_type??null,r.permit_status??null,r.permit_number??null,r.issue_date??null,r.lead_time_months??null,r.complexity_rating??null,r.docket_url??null,r.echo_pgm_sys_id??null,r.data_source??null,r.last_verified??null,r.notes??null));
+  console.log('air_permits seeded:', SEED.air_permits.length);
+}
+
 // Always update btm_vendors with tech_id, lead_time_notes, sources (these columns were added after initial seed)
 if (SEED.btm_vendors && SEED.btm_vendors.length > 0) {
   const updVendor = db.prepare('UPDATE btm_vendors SET tech_id=?, lead_time_notes=?, sources=?, tech_type=?, lead_time_weeks=? WHERE id=?');
