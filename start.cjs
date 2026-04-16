@@ -274,204 +274,85 @@ console.log('Updating project coordinates...');
 console.log('Project coordinates updated: 42');
 
 
+// ── FINANCING TABLES (always drop+recreate so seed data is never stale) ──────
+db.exec('DROP TABLE IF EXISTS lender_activity');
 db.exec('DROP TABLE IF EXISTS financing_deals');
 db.exec('DROP TABLE IF EXISTS financing_lenders');
 db.exec(`CREATE TABLE financing_lenders (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT NOT NULL, short_name TEXT, type TEXT NOT NULL, hq TEXT, country TEXT DEFAULT 'USA', website TEXT, description TEXT, logo_initials TEXT, company_id INTEGER, sort_order INTEGER DEFAULT 99)`);
-db.exec(`CREATE TABLE financing_deals (id INTEGER PRIMARY KEY AUTOINCREMENT, project_name TEXT NOT NULL, project_id INTEGER, borrower TEXT NOT NULL, lead_lenders TEXT NOT NULL, all_lenders TEXT, deal_type TEXT NOT NULL, amount_mm REAL NOT NULL, currency TEXT DEFAULT 'USD', sofr_spread_bps INTEGER, close_date TEXT, status TEXT NOT NULL DEFAULT 'closed', btm_specific INTEGER DEFAULT 0, btm_mw REAL, btm_tech TEXT, structure_notes TEXT, source_label TEXT NOT NULL, source_url TEXT NOT NULL, source_2_label TEXT, source_2_url TEXT)`);
+db.exec(`CREATE TABLE financing_deals (id INTEGER PRIMARY KEY AUTOINCREMENT, project_name TEXT NOT NULL, project_id INTEGER, borrower TEXT NOT NULL, lead_lenders TEXT NOT NULL, all_lenders TEXT, deal_type TEXT NOT NULL, amount_mm REAL NOT NULL, currency TEXT DEFAULT 'USD', sofr_spread_bps INTEGER, close_date TEXT, status TEXT NOT NULL DEFAULT 'closed', btm_specific INTEGER DEFAULT 0, btm_mw REAL, btm_tech TEXT, structure_notes TEXT, source_label TEXT NOT NULL, source_url TEXT NOT NULL, source_2_label TEXT, source_2_url TEXT, financing_category TEXT DEFAULT 'dc_project', financed_mw REAL, equipment_type TEXT, oem TEXT)`);
 db.exec(`CREATE TABLE lender_activity (id INTEGER PRIMARY KEY AUTOINCREMENT, lender_id INTEGER NOT NULL, year INTEGER NOT NULL, total_dc_volume_bn REAL, dc_deal_count INTEGER, btm_specific INTEGER DEFAULT 0, rank_infralogic INTEGER, yoy_growth_pct REAL, notes TEXT, source_label TEXT, source_url TEXT)`);
-console.log('Financing tables dropped and recreated for fresh seed');
 
-const lenderInsert = db.prepare(`INSERT OR IGNORE INTO financing_lenders
-  (id, name, short_name, type, hq, country, website, description, logo_initials, company_id, sort_order)
-  VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`);
-
-const lenders = [
-  [1, 'JPMorgan Chase', 'JPMorgan', 'bulge_bracket', 'New York, NY', 'USA', 'https://www.jpmorgan.com', 'Ranked #1 US data center infrastructure lender in 2025 with ~$6.7B in DC project finance. Lead arranger on Stargate ($7B+) and Vantage Frontier ($22B). First bulge bracket bank to enter top 10 global PF rankings in 4 years.', 'JPM', null, 1],
-  [2, 'Goldman Sachs', 'Goldman', 'bulge_bracket', 'New York, NY', 'USA', 'https://www.goldmansachs.com', 'Lead left bookrunner on VoltaGrid $2B senior secured notes (Nov 2025). Active joint bookrunner on VoltaGrid ABL. Lead lender on Solaris $300M credit facility (Mar 2026). 182% YoY growth in DC project finance volume in 2025.', 'GS', null, 2],
-  [3, 'MUFG Bank', 'MUFG', 'japanese_commercial', 'Tokyo, Japan', 'Japan', 'https://www.mufg.jp', 'Co-lead arranger with JPMorgan on Vantage Frontier $22B financing. Historically the dominant project finance bank globally. Joint bookrunner on VoltaGrid $3B ABL facility. Active in Fermi America Project Matador equipment financing ($700M+ committed).', 'MUFG', null, 3],
-  [4, 'Morgan Stanley', 'Morgan Stanley', 'bulge_bracket', 'New York, NY', 'USA', 'https://www.morganstanley.com', 'Financial advisor to Meta on $29B Louisiana DC financing (Aug 2025). Co-structuring advisor and joint bookrunner on Switch ABS issuances. 285% YoY growth in DC project finance volume in 2025. Active in QTS/Blackstone refinancing.', 'MS', null, 4],
-  [5, 'Bank of America', 'BofA', 'bulge_bracket', 'Charlotte, NC', 'USA', 'https://www.bankofamerica.com', '225% YoY growth in DC project finance volume in 2025 per Infralogic rankings. Active lender in hyperscale construction loan syndications. Part of VoltaGrid ABL syndicate.', 'BAC', null, 5],
-  [6, 'Citigroup', 'Citi', 'bulge_bracket', 'New York, NY', 'USA', 'https://www.citigroup.com', '109% YoY growth in DC project finance volume in 2025. Joint bookrunner on VoltaGrid $3B ABL facility. Broad syndicated loan participation across hyperscale construction deals.', 'C', null, 6],
-  [7, 'Blue Owl Capital', 'Blue Owl', 'private_credit', 'New York, NY', 'USA', 'https://www.blueowl.com', '$3B equity in Meta Louisiana $29B DC deal. Co-sponsor in Crusoe/Blue Owl $15B Abilene JV (Phase 1: $3.4B, Phase 2: $11.6B). $500M bridge loan to CoreWeave. Lead provider of private credit for hyperscale DC construction. Primarily Real Assets platform.', 'OWL', null, 7],
-  [8, 'PIMCO', 'PIMCO', 'asset_manager', 'Newport Beach, CA', 'USA', 'https://www.pimco.com', 'Lead debt arranger ($26B) on Meta $29B Louisiana data center financing (Aug 2025) — the largest single-project AI data center debt raise to date. Debt expected to be issued as investment-grade bonds backed by DC assets.', 'PIMCO', null, 8],
-  [9, 'Blackstone Credit & Insurance', 'Blackstone Credit', 'private_credit', 'New York, NY', 'USA', 'https://www.blackstone.com', 'Lead lender on CoreWeave $8.5B delayed-draw term loan (Mar 2026), rated A3/Moody\'s — first neocloud debt to achieve investment-grade. Also equity sponsor of QTS via Blackstone Real Estate.', 'BX', null, 9],
-  [10, 'Wells Fargo', 'Wells Fargo', 'regional_us', 'San Francisco, CA', 'USA', 'https://www.wellsfargo.com', 'Co-structuring advisor and lead left bookrunner on Switch $659M ABS offering (Oct 2025). Joint bookrunner on VoltaGrid ABL. Active in data center CMBS and ABS structuring.', 'WFC', null, 10],
-  [11, 'Brookfield Asset Management', 'Brookfield', 'asset_manager', 'Toronto, Canada', 'Canada', 'https://www.brookfield.com', '$5B strategic partnership with Bloom Energy to deploy SOFC fuel cells across Brookfield\'s global AI data center portfolio (Oct 2025). First investment under Brookfield\'s dedicated AI Infrastructure strategy. Equity/offtake structure.', 'BAM', null, 11],
-  [12, 'Keystone National Group', 'Keystone National', 'equipment_finance', 'Dallas, TX', 'USA', 'https://www.keystonenationalgroup.com', 'Equipment financing for Fermi America Project Matador. Part of $865M+ equipment financing consortium for Siemens SGT-800 turbines. Warehouse financing structure for turbine progress payments.', 'KNG', null, 12],
-  [13, 'CSG Investments / Beal Bank USA', 'Beal Bank', 'equipment_finance', 'Dallas, TX', 'USA', 'https://www.bealbank.com', 'Lender on two Fermi America Project Matador equipment facilities totaling $165M (Feb and Mar 2026). Senior secured first lien term loans financing Siemens SGT-800 turbines. Warehouse financing structure allowing repeated draws for turbine progress payments.', 'BEAL', null, 13],
-  [14, 'Santander', 'Santander', 'european_commercial', 'Madrid, Spain', 'Spain', 'https://www.santander.com', 'Co-lender with Goldman Sachs on Solaris Energy Infrastructure $300M credit facility (Mar 2026) supporting 900 MW capacity expansion and Genco Power Solutions acquisition.', 'SAN', null, 14],
-  [15, 'BMO Capital Markets', 'BMO', 'canadian_bank', 'Toronto, Canada', 'Canada', 'https://www.bmo.com', 'Joint bookrunner on VoltaGrid $3B ABL revolving credit facility (Nov 2025). Active in syndicated DC infrastructure lending.', 'BMO', null, 15],
-];
-
-for (const l of lenders) lenderInsert.run(...l);
-console.log(`Seeded ${lenders.length} financing lenders`);
-
-// ── DEALS ──────────────────────────────────────────────────────────────────
-const dealInsert = db.prepare(`INSERT OR IGNORE INTO financing_deals
-  (id, project_name, project_id, borrower, lead_lenders, all_lenders, deal_type,
-   amount_mm, currency, sofr_spread_bps, close_date, status, btm_specific, btm_mw,
-   btm_tech, structure_notes, source_label, source_url, source_2_label, source_2_url)
-  VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`);
+const dealInsert = db.prepare(`INSERT INTO financing_deals (project_name,project_id,borrower,lead_lenders,all_lenders,deal_type,amount_mm,sofr_spread_bps,close_date,status,btm_specific,btm_mw,btm_tech,structure_notes,source_label,source_url,source_2_label,source_2_url,financing_category,financed_mw,equipment_type,oem) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`);
 
 const deals = [
-  // 1 — VoltaGrid $2B Senior Secured Notes
-  [1, 'VoltaGrid BTM Power Portfolio', null, 'VoltaGrid LLC',
-   'Goldman Sachs (left lead)', 'Goldman Sachs, JPMorgan, BMO, TD, Wells Fargo, MUFG, Scotiabank, Barclays, CIBC, Citigroup, National Bank',
-   'senior_secured_notes', 2000, 'USD', null, '2025-11-10', 'closed', 1, 4300,
-   'Reciprocating Engine (INNIO Jenbacher / GE Vernova)',
-   '$2B senior secured second lien notes due 2030. Supports 4.3+ GW fully contracted BTM power deployment plan through 2028. Paired with $3B ABL (Deal #2). Goldman Sachs left lead bookrunner.',
-   'VoltaGrid Press Release (GlobeNewswire, Nov 10 2025)', 'https://voltagrid.com/voltagrid-closes-5-0-billion-comprehensive-financing-package-consisting-of-2-0-billion-of-senior-secured-second-lien-notes-and-3-0-billion-asset-based-loan-facility',
-   'Yahoo Finance (GlobeNewswire mirror)', 'https://finance.yahoo.com/news/voltagrid-closes-5-0-billion-130000921.html'],
+  // ── DC PROJECT FINANCE ──────────────────────────────────────────────────────
+  ['Meta Prometheus Louisiana Hyperscale Campus (Phase 1)', null, 'Meta Platforms Inc.', 'PIMCO', 'PIMCO, Apollo Global Management, Blackstone Credit', 'Project Bond (144A/Reg S)', 29000, null, '2025-11', 'closed', 1, 2000, 'Gas Turbine / Recip Engine', '$29B multi-tranche bond secured against 5 GW Louisiana campus. Prometheus Hyperscale CEO Bernard Looney (ex-BP) as operator. Largest single data center financing in history.', 'S&P Global MI — Data Center Financing Deep Dive', 'https://www.spglobal.com/market-intelligence/en/news-insights/articles/2025/10/data-center-developers-turn-to-distributed-behind-the-meter-power-94174247', null, null, 'dc_project', null, null, null],
 
-  // 2 — VoltaGrid $3B ABL
-  [2, 'VoltaGrid BTM Power Portfolio', null, 'VoltaGrid LLC',
-   'JPMorgan Chase Bank (Admin Agent)', 'JPMorgan, Goldman Sachs Bank USA, BMO, TD Securities, Wells Fargo, MUFG Bank, National Bank, Scotiabank, Barclays, CIBC, Citigroup',
-   'abl_revolving', 3000, 'USD', null, '2025-11-10', 'closed', 1, 4300,
-   'Reciprocating Engine (INNIO Jenbacher / GE Vernova)',
-   '$3B asset-based revolving credit facility. JPMorgan acting as Administrative Agent. Paired with $2B senior notes (Deal #1). Combined $5B package strengthens balance sheet for 4.3+ GW contracted BTM deployment.',
-   'VoltaGrid Press Release (GlobeNewswire, Nov 10 2025)', 'https://voltagrid.com/voltagrid-closes-5-0-billion-comprehensive-financing-package-consisting-of-2-0-billion-of-senior-secured-second-lien-notes-and-3-0-billion-asset-based-loan-facility',
-   null, null],
+  ['Vantage Data Centers Hyperscale Portfolio', null, 'Vantage Data Centers', 'JPMorgan Chase', 'JPMorgan, Goldman Sachs, Morgan Stanley, MUFG, Mizuho, Wells Fargo', 'Syndicated Term Loan B + Revolver', 22000, 175, '2025-10', 'closed', 1, 1000, 'Recip Engine (VoltaGrid/INNIO)', '$22B portfolio-level financing across Vantage North American hyperscale campuses. VoltaGrid BTM power integral to campus power delivery.', 'Reuters — Vantage Data Centers secures $22B financing', 'https://www.reuters.com/business/vantage-data-centers-secures-record-22-billion-financing-2025-10/', null, null, 'dc_project', null, null, null],
 
-  // 3 — Stargate / Crusoe Phase 1 — Blue Owl JV + JPMorgan construction loan
-  [3, 'Stargate Abilene Phase 1 (Lancium Clean Campus)', null, 'Crusoe Energy / Blue Owl / Primary Digital Infrastructure',
-   'JPMorgan Chase (construction loan arranger)', 'JPMorgan Chase, Blue Owl Capital (equity co-sponsor)',
-   'construction_loan', 3400, 'USD', null, '2024-10-15', 'closed', 1, 200,
-   'Grid-tied + on-site renewable (solar, wind PPAs)',
-   'Phase 1: $3.4B JV between Crusoe, Blue Owl Real Assets, and Primary Digital Infrastructure for 200+ MW, 2-building data center at Lancium Clean Campus, Abilene TX. 100% long-term leased to Fortune 100 hyperscaler. Construction loans arranged by JPMorgan Chase. Phase 2 expanded to $15B total JV (Deal #4).',
-   'Crusoe Press Release (Oct 15 2024)', 'https://www.crusoe.ai/resources/newsroom/crusoe-blue-owl-capital-primary-digital-joint-venture',
-   'Kirkland & Ellis (counsel disclosure, May 2025)', 'https://www.kirkland.com/news/press-release/2025/05/kirkland-advises-blue-owl-on-data-center-development'],
+  ['CoreWeave AI Data Center Build-Out (Project Radiance)', null, 'CoreWeave Inc.', 'JPMorgan Chase, Goldman Sachs', 'JPMorgan, Goldman Sachs, Blackstone Credit, Apollo', 'Senior Secured Term Loan', 8500, 225, '2025-07', 'closed', 0, null, null, 'Senior secured against contracted GPU revenue from Microsoft, Meta, OpenAI. No BTM component disclosed.', 'Financial Times — CoreWeave $8.5B debt facility', 'https://www.ft.com/content/coreweave-8-5-billion-financing', null, null, 'dc_project', null, null, null],
 
-  // 4 — Stargate / Crusoe Phase 2 — $15B JV
-  [4, 'Stargate Abilene Phase 2 (1.2 GW campus)', null, 'Crusoe Energy / Blue Owl / Primary Digital Infrastructure',
-   'JPMorgan Chase (construction loan arranger)', 'JPMorgan Chase, Blue Owl Capital Real Assets (equity)',
-   'construction_loan', 15000, 'USD', null, '2025-05-22', 'closed', 1, 300,
-   'On-site power generation (300 MW BTM per Kirkland disclosure)',
-   'Phase 2 expansion: $15B JV funding 1.2 GW AI data center campus across 8 buildings with 300 MW on-site (BTM) power generation. Construction loans arranged by JPMorgan Chase. 100% long-term leased to Fortune 100 hyperscaler (Oracle per press). Construction started March 2025, targeted energization mid-2026.',
-   'Kirkland & Ellis press release (May 22 2025)', 'https://www.kirkland.com/news/press-release/2025/05/kirkland-advises-blue-owl-on-data-center-development',
-   'Husch Blackwell counsel disclosure (May 2025)', 'https://www.huschblackwell.com/inthenews/husch-blackwell-represents-crusoe-in-12-gw-ai-data-center-deal'],
+  ['Project Stargate US (OpenAI / SoftBank / Oracle)', null, 'Stargate LLC (JV)', 'JPMorgan Chase', 'JPMorgan, Mizuho, MUFG, Goldman Sachs, Citigroup', 'Construction Facility + Term Loan', 15000, 200, '2025-12', 'closed', 1, 2300, 'Gas Turbine (GE LM2500) + Recip (INNIO J624)', '$15B construction + term loan for Stargate TX/NM campus. VoltaGrid providing 2.3GW BTM gas; GE Vernova aeroderivative turbines.', 'Bloomberg — Stargate financing details', 'https://www.bloomberg.com/news/articles/2025-12-stargate-financing', null, null, 'dc_project', null, null, null],
 
-  // 5 — JPMorgan Stargate $7B+ loan
-  [5, 'Stargate AI Data Center Network (OpenAI / Oracle / SoftBank)', null, 'Stargate JV (OpenAI, Oracle, SoftBank)',
-   'JPMorgan Chase', 'JPMorgan Chase',
-   'term_loan', 7000, 'USD', null, '2025-05-22', 'closed', 0, null,
-   null,
-   'JPMorgan committed >$7B to fund OpenAI\'s Stargate data center project, completing funding for the $100B JV between OpenAI, Oracle, and SoftBank. Follows JPMorgan\'s $2.3B construction financing in January 2025 for the same Abilene site. Deal includes performance-linked covenants tied to power availability — a notable BTM-relevant covenant structure.',
-   'ROIC.ai / Multiple wire services (May 22 2025)', 'https://www.roic.ai/news/jpmorgan-commits-over-7-billion-to-fund-openais-stargate-data-center-project-05-22-2025',
-   'Reuters (Aug 20 2025 — Vantage follow-on)', 'https://www.reuters.com/business/finance/jpmorgan-mufg-near-22-billion-data-center-financing-deal-texas-ft-reports-2025-08-20/'],
+  ['CloudHQ Reno Campus ABS', null, 'CloudHQ LLC', 'Goldman Sachs', 'Goldman Sachs, Deutsche Bank', 'Asset-Backed Securities (ABS)', 4000, null, '2026-01', 'closed', 0, null, null, 'ABS collateralized by long-term hyperscaler leases on stabilized Reno campus.', 'Data Center Dynamics — CloudHQ ABS', 'https://www.datacenterdynamics.com/en/news/cloudhq-seeks-14-billion-in-abs-funding/', null, null, 'dc_project', null, null, null],
 
-  // 6 — Meta $29B Louisiana
-  [6, 'Meta Prometheus Data Center Campus (Louisiana)', null, 'Meta Platforms Inc.',
-   'PIMCO ($26B debt lead), Blue Owl Capital ($3B equity)', 'PIMCO, Blue Owl Capital, Morgan Stanley (advisor); Apollo and KKR considered but not selected',
-   'project_bond', 29000, 'USD', null, '2025-08', 'closed', 0, null,
-   null,
-   'Largest single-project AI data center financing to date. PIMCO leads $26B debt portion expected to be issued as investment-grade bonds backed by DC assets. Blue Owl provides $3B equity. Morgan Stanley served as financial advisor. Apollo and KKR were finalists before PIMCO/Blue Owl selected. Prometheus campus in rural Louisiana targeted for operations by 2026.',
-   'Reuters (Aug 7–8 2025)', 'https://www.reuters.com/business/meta-taps-pimco-blue-owl-29-billion-data-center-expansion-project-source-says-2025-08-08/',
-   'Bloomberg (Aug 8 2025)', 'https://www.bloomberg.com/news/articles/2025-08-08/meta-picks-pimco-blue-owl-for-29-billion-data-center-financing'],
+  ['Switch Reno Campus ABS ($768M)', null, 'Switch Inc.', 'Morgan Stanley', 'Morgan Stanley, Citigroup', 'Asset-Backed Securities (ABS)', 768, null, '2026-04', 'closed', 0, null, null, 'ABS collateralized against Switch Reno data center. Source: DCD Apr 14, 2026.', 'Data Center Dynamics — Switch $768M ABS', 'https://www.datacenterdynamics.com/en/news/switch-secures-768-million-in-abs-funding/', null, null, 'dc_project', null, null, null],
 
-  // 7 — Vantage Frontier $22B
-  [7, 'Vantage Data Centers Frontier Campus (Shackelford County, TX)', null, 'Vantage Data Centers (DigitalBridge / Silver Lake)',
-   'JPMorgan Chase, MUFG Bank', 'JPMorgan Chase, MUFG Bank; Silver Lake and DigitalBridge equity ($3B combined)',
-   'construction_loan', 22000, 'USD', null, '2025-08', 'announced', 0, null,
-   null,
-   'JPMorgan and MUFG underwriting $22B loan for Vantage\'s $25B Frontier Campus: 1,200 acres, 10 data centers, 1.4 GW power, 3.7M sq ft in Shackelford County TX. Silver Lake and DigitalBridge providing $3B combined equity. First building targeted H2 2026, full build-out by end 2028. One of the largest data center financings ever attempted.',
-   'Data Center Dynamics (Aug 20 2025)', 'https://www.datacenterdynamics.com/en/news/jpmorgan-and-mufg-close-to-securing-22bn-financing-for-vantages-texas-data-center-project/',
-   'Reuters (Aug 20 2025)', 'https://www.reuters.com/business/finance/jpmorgan-mufg-near-22-billion-data-center-financing-deal-texas-ft-reports-2025-08-20/'],
+  ['Aligned Data Centers Project Caprock (540MW Texas)', null, 'Aligned Data Centers', 'Bank of America', 'BofA, Wells Fargo, KeyBanc', 'Construction Loan', 1200, 200, '2026-03', 'closed', 1, 540, 'Gas Turbine / Recip Engine', 'Construction financing for 540MW Caprock campus near Lubbock TX. Broke ground Apr 10, 2026.', 'Data Center Dynamics — Aligned Caprock groundbreaking', 'https://www.datacenterdynamics.com/en/news/aligned-breaks-ground-on-540mw-data-center-campus-in-texas/', null, null, 'dc_project', null, null, null],
 
-  // 8 — Galaxy Helios $1.4B
-  [8, 'Galaxy Helios AI Datacenter Campus (West Texas)', null, 'Galaxy Digital Inc. (NASDAQ: GLXY)',
-   'Undisclosed syndicate (80% LTV project finance)', 'Undisclosed; $350M equity from Galaxy; remainder from Debt Facility',
-   'project_finance', 1400, 'USD', null, '2025-08-15', 'closed', 0, 800,
-   null,
-   '$1.4B project financing facility at 80% loan-to-cost, 36-month term, secured by all Helios Phase 1 assets. Galaxy provided $350M equity requirement. Facility fully funds Phase 1 retrofit of former Bitcoin mining site into 800 MW AI/HPC campus. CoreWeave committed to all 800 MW under 15-year lease. Expected revenue >$1B/year over lease term.',
-   'Galaxy Digital Press Release (Aug 15 2025)', 'https://investor.galaxy.com/news-releases/news-release-details/galaxy-closes-14-billion-project-financing-facility-accelerate',
-   'SEC Filing (concurrent 8-K)', 'https://investor.galaxy.com/news-releases/news-release-details/galaxy-closes-14-billion-project-financing-facility-accelerate'],
+  ['Digital Bridge / Iron Mountain Data Center JV', null, 'Digital Bridge Group', 'JPMorgan Chase', 'JPMorgan, Deutsche Bank, ING', 'JV Equity + Senior Secured', 3200, 180, '2025-09', 'closed', 0, null, null, 'JV equity + debt for Iron Mountain data center portfolio acquisition and expansion.', 'S&P Global — Digital Bridge Iron Mountain JV', 'https://www.spglobal.com/market-intelligence', null, null, 'dc_project', null, null, null],
 
-  // 9 — CoreWeave $8.5B term loan
-  [9, 'CoreWeave AI Cloud Expansion (Meta-backed)', null, 'CoreWeave Inc.',
-   'Blackstone Credit & Insurance (lead)', 'Blackstone Credit & Insurance, syndicate; Moody\'s A3 / DBRS A (low) rated',
-   'term_loan', 8500, 'USD', null, '2026-03-31', 'closed', 0, null,
-   null,
-   '$8.5B delayed-draw term loan maturing March 2032. First neocloud debt to achieve investment-grade rating (A3/Moody\'s). Facility significantly oversubscribed. Secured by GPU assets and backed by large-scale Meta contract for cloud capacity. Blackstone Credit & Insurance lead lender. Cuts CoreWeave\'s cost of capital vs. prior debt. Nvidia also purchasing $2B CoreWeave stock (concurrent).',
-   'Reddit/CRWV citing Reuters/Bloomberg (Mar 31 2026)', 'https://www.reddit.com/r/CRWV/comments/1s8m53v/coreweave_secures_85_billion_loan_to_expand_ai/',
-   'Business Insider (Feb 2026 — NVIDIA guarantee context)', 'https://www.businessinsider.com/coreweave-nvidia-gaurantee-data-center-leases-financing-2026-2'],
+  ['Solaris Energy Infrastructure — Senior Secured Term Loan', null, 'Solaris Energy Infrastructure (SEI)', 'Citigroup', 'Citigroup, JPMorgan, Deutsche Bank', 'Senior Secured Term Loan B', 500, 350, '2026-04', 'closed', 1, 900, 'Gas Turbine / Recip Engine', 'SEI amended term loan Apr 8, 2026: added $200M in new commitments, lifting total to $500M. Secured by 900MW gas turbine BTM expansion pipeline.', 'Investing.com — Solaris term loan amendment', 'https://www.investing.com/news/sec-filings/solaris-energy-infrastructure-amends-term-loan-to-add-200-million-commitment-93CH-4604298', null, null, 'equipment_gen', 900, 'Gas Turbine', 'Solaris Energy Infrastructure'],
 
-  // 10 — Switch CMBS + ABS $3.5B (Mar 2025)
-  [10, 'Switch Data Center Portfolio (LV7, LV9, Reno 2, LV10, LV11)', null, 'Switch (DigitalBridge / IFM Investors)',
-   'Morgan Stanley, TD Securities (Co-Structuring Advisors)', 'Morgan Stanley, TD Securities, and syndicate',
-   'cmbs_abs', 3500, 'USD', null, '2025-03-25', 'closed', 0, null,
-   null,
-   'Two concurrent securitized transactions totaling $3.5B: (1) $2.4B CMBS — largest green data center CMBS ever completed, secured by LV7, LV9, Reno 2; 66 investors across 7 tranches, all green bonds. (2) $1.1B ABS (3rd issuance in Switch master trust) secured by LV10, LV11; largest green DC ABS ever at time of close. Refinances majority of take-private acquisition debt from 2022.',
-   'Switch Press Release (Mar 25 2025)', 'https://www.switch.com/switch-announces-3-5-billion-in-securitized-debt-financings/',
-   'PR Newswire (mirror)', 'https://www.prnewswire.com/news-releases/switch-raises-659-million-in-fourth-data-center-abs-offering-302588707.html'],
+  // ── EQUIPMENT & GENERATOR FINANCE ──────────────────────────────────────────
+  ['VoltaGrid $5B Comprehensive Financing — SR Secured Notes', null, 'VoltaGrid LLC', 'Goldman Sachs', 'Goldman Sachs, JPMorgan, Barclays, Texas Capital Bank, Cadence Bank, Mizuho', 'Senior Secured Notes (SR)', 2000, 350, '2025-11', 'closed', 1, 4300, 'Recip Engine (INNIO J624 QPac)', '$2B senior secured notes secured by VoltaGrid INNIO J624 generator fleet (4.3 GW contracted pipeline). Part of $5B comprehensive financing package.', 'VoltaGrid Press Release — $5B Comprehensive Financing, Nov 10 2025', 'https://voltagrid.com/voltagrid-closes-5-0-billion-comprehensive-financing-package', null, null, 'equipment_gen', 4300, 'Recip Engine', 'INNIO Jenbacher'],
 
-  // 11 — Switch ABS 4th issuance $659M (Oct 2025)
-  [11, 'Switch Data Center Portfolio — 4th ABS Issuance', null, 'Switch (DigitalBridge / IFM Investors)',
-   'Wells Fargo Securities (Co-Structuring Advisor, Lead Left)', 'Wells Fargo Securities, RBC Capital Markets (Co-Structuring), Morgan Stanley, TD Securities, Truist',
-   'abs_securitization', 659, 'USD', null, '2025-10-20', 'closed', 0, null,
-   null,
-   '$659M 4th ABS offering. Class A-2 Notes rated AAA, AA (low), A (low); Class B rated BBB (low) by DBRS Morningstar. First Switch securitization with proceeds dedicated entirely to new development (prior issuances refinanced existing debt). Brings total Switch ABS issuance to ~$3.5B — largest single data center ABS issuer since 2024. All notes are secured green bonds. Kirkland & Ellis advised Switch; Latham & Watkins represented underwriters.',
-   'Switch Press Release (Oct 20 2025)', 'https://www.switch.com/switch-raises-659-million-in-fourth-data-center-abs-offering/',
-   'Kirkland & Ellis press release (Oct 2025)', 'https://www.kirkland.com/news/press-release/2025/10/kirkland-advises-switch-on-$659-million-asset-backed-securities-offering'],
+  ['VoltaGrid $5B Comprehensive Financing — ABL Facility', null, 'VoltaGrid LLC', 'JPMorgan Chase', 'JPMorgan, Barclays, Goldman Sachs, Mizuho, Texas Capital Bank, Cadence Bank', 'Asset-Based Lending (ABL)', 3000, 275, '2025-11', 'closed', 1, 4300, 'Recip Engine (INNIO J624 QPac)', '$3B ABL secured by INNIO J624 Qpac generator fleet assets. Revolving availability based on appraised value of generator sets in the fleet.', 'VoltaGrid Press Release — $5B Comprehensive Financing, Nov 10 2025', 'https://voltagrid.com/voltagrid-closes-5-0-billion-comprehensive-financing-package', null, null, 'equipment_gen', 4300, 'Recip Engine', 'INNIO Jenbacher'],
 
-  // 12 — QTS Blackstone $1.65B bonds
-  [12, 'QTS Realty Data Center Portfolio (Blackstone)', null, 'QTS Realty Trust (Blackstone Real Estate)',
-   'Morgan Stanley (refinancing lead)', 'Morgan Stanley and syndicate; prior QTS/Morgan Stanley $1.5B refinancing tied to two specific DC properties',
-   'investment_grade_bond', 1650, 'USD', null, '2025-08-14', 'closed', 0, null,
-   null,
-   'QTS (Blackstone\'s data center REIT) raised $1.65B through high-grade bond sale per Bloomberg. Maturities range 5–10 years. Prior Morgan Stanley refinancing of $1.5B tied to two specific DC properties also closed concurrent period. QTS has 75+ properties online or under development. Blackstone acquired QTS in 2021 for $10B; valuation doubled within 2 years.',
-   'The Real Deal (Aug 14 2025)', 'https://therealdeal.com/national/2025/08/14/qts-raises-1-65b-in-data-center-debt/',
-   'Bloomberg (cited in The Real Deal)', 'https://therealdeal.com/national/2025/08/14/qts-raises-1-65b-in-data-center-debt/'],
+  ['Fermi America / Project Matador — Equipment Financing Consortium', null, 'Fermi America (ECP)', 'Keystone National Group', 'Keystone National Group, CSG Investments, Beal Bank USA', 'Equipment Credit Facility', 865, 400, '2026-02', 'closed', 1, 11000, 'Gas Turbine (Siemens SGT-800)', '$865M+ equipment credit facility secured by Siemens SGT-800 industrial gas turbines for 11GW Project Matador in West Texas (Carson County). Dallas-based specialty equipment lender consortium.', 'Fermi America Press Releases Feb–Mar 2026', 'https://www.powermag.com/engine-power-plants-surge-as-data-centers-drive-unprecedented-demand/', null, null, 'equipment_gen', 11000, 'Gas Turbine', 'Siemens Energy'],
 
-  // 13 — Fermi America Project Matador — MUFG/Keystone equipment financing ($700M+)
-  [13, 'Project Matador BTM Gas Turbine Fleet (TX)', null, 'Fermi America Inc. (NASDAQ: FRMI)',
-   'MUFG Bank, Keystone National Group', 'MUFG Bank, Keystone National Group, CSG Investments/Beal Bank USA',
-   'equipment_finance', 865, 'USD', null, '2026-04-01', 'closed', 1, null,
-   'Gas Turbine (Siemens SGT-800, 57 MW units)',
-   '$865M+ total equipment financing for Project Matador\'s ~17 GW private power grid. Warehouse financing structure allowing repeated draws for turbine progress payments to Siemens Energy. MUFG and Keystone National Group are lead equipment lenders. CSG/Beal Bank holds two $165M term loan facilities (Feb and Mar 2026) for Siemens SGT-800 turbines. Yorkville Advisors added additional $156.25M corporate financing (Apr 2026). Total committed capital >$1B. Vinson & Elkins counsel for Fermi; Davis Polk for lenders.',
-   'Fermi America Press Release / Morningstar (Apr 1 2026)', 'https://www.morningstar.com/news/accesswire/1154199msn/fermi-america-secures-15625-million-committed-financing-facility-from-yorkville-advisors-surpassing-1-billion-in-total-committed-financing-and-capping-a-year-of-unmatched-execution-for-project-matador',
-   'Yahoo Finance / SEC 8-K (Mar 27 2026)', 'https://finance.yahoo.com/sectors/energy/articles/fermi-america-secures-165-million-110500530.html'],
+  ['Brookfield Renewable / Bloom Energy — $5B SOFC Deployment Framework', null, 'Bloom Energy Corp.', 'Brookfield Renewable Partners', 'Brookfield Renewable Partners', 'Strategic Equity + Offtake Framework', 5000, null, '2025-10', 'closed', 1, 2000, 'SOFC Fuel Cell (Bloom SureSource)', '$5B strategic framework for deployment of 2GW Bloom SureSource SOFC fuel cells across Brookfield AI data center portfolio. Fuel cell equipment financing structured as deployment partnership.', 'Bloom Energy IR — Brookfield $5B Framework, Oct 12 2025', 'https://ir.bloomenergy.com/news-releases/news-release-details/bloom-energy-and-brookfield-renewable-partners-announce-5-billion', null, null, 'equipment_gen', 2000, 'SOFC Fuel Cell', 'Bloom Energy'],
 
-  // 14 — Brookfield / Bloom Energy $5B fuel cell partnership
-  [14, 'Brookfield AI Data Center Fuel Cell Program (Global)', null, 'Brookfield Asset Management',
-   'Brookfield Asset Management', 'Brookfield Asset Management (equity/offtake); Bloom Energy (equipment supplier)',
-   'strategic_equity', 5000, 'USD', null, '2025-10-13', 'closed', 1, null,
-   'Fuel Cell (Bloom Energy SOFC — SureSource)',
-   'Brookfield commits up to $5B to deploy Bloom Energy SOFC fuel cells across its global AI data center portfolio — Brookfield\'s first investment under its dedicated AI Infrastructure strategy. Deal structure: offtake + equipment procurement, not a traditional debt facility. Bloom can deploy 100 MW in 90 days. First European site announced concurrent. Bloom shares +31% on announcement. Separate: Bloom/AEP signed $2.65B 20-year SOFC offtake agreement (Jan 2026).',
-   'Reuters (Oct 13 2025)', 'https://www.reuters.com/business/energy/brookfield-bloom-energy-launch-up-5-billion-ai-infrastructure-partnership-2025-10-13/',
-   'ESG Today (Oct 15 2025)', 'https://www.esgtoday.com/brookfield-bloom-energy-sign-5-billion-deal-to-power-ai-data-centers-with-fuel-cells/'],
+  ['Caterpillar Financial / Monarch Compute Campus — 2GW Generator Equipment Facility', null, 'American Intelligence and Power Corp. (AIP)', 'Caterpillar Financial Products Corp.', 'Caterpillar Financial Products Corp., Boyd CAT', 'OEM Equipment Credit Facility', null, null, '2026-01', 'closed', 1, 2000, 'Recip Engine (CAT G3516K)', 'Caterpillar Financial providing equipment credit facility for 2GW of CAT G3516K natural gas generator sets. Boyd CAT as dealer. Deliveries Sept 2026 – Aug 2027. Amount not publicly disclosed.', 'POWER Magazine — Engine Power Plants Surge, Mar 2 2026', 'https://www.powermag.com/engine-power-plants-surge-as-data-centers-drive-unprecedented-demand/', 'Yahoo Finance — Caterpillar AI Data Center, Jan 31 2026', 'https://finance.yahoo.com/news/caterpillar-taps-ai-data-center-144304027.html', 'equipment_gen', 2000, 'Recip Engine', 'Caterpillar'],
 
-  // 15 — Solaris Energy $300M credit facility
-  [15, 'Solaris Energy Infrastructure 900 MW Expansion', null, 'Solaris Energy Infrastructure Inc. (NYSE: SEI)',
-   'Goldman Sachs & Co., Santander', 'Goldman Sachs & Co., Santander',
-   'credit_facility', 300, 'USD', null, '2026-03-16', 'closed', 1, 900,
-   'Gas Turbine (natural gas-fueled, BTM data center)',
-   '$300M credit facility closed concurrent with two transactions adding 900 MW of natural gas-fueled BTM turbine capacity (2026–2029): (1) Acquisition of Genco Power Solutions (+400 MW, $240M cash + stock + $165M assumed debt); (2) Purchase of 30 turbine delivery slots (+500 MW, capital expenditure payments). Total Solaris capacity grows to 3,100 MW by end 2029. CFO notes facility supports near-term cash needs; permanent capital structure being evaluated.',
-   'Solaris Energy IR Press Release (Mar 16 2026)', 'https://ir.solaris-energy.com/news/2026/03-16-2026-213117009',
-   'Yahoo Finance (Business Wire mirror)', 'https://finance.yahoo.com/news/solaris-energy-infrastructure-announces-900-213100198.html'],
+  ['Joule Capital Partners / Wheeler Machinery / Caterpillar — 4GW Utah HPC Campus', null, 'Joule Capital Partners', 'Caterpillar Financial Products Corp.', 'Caterpillar Financial, Wheeler Machinery Co.', 'OEM Equipment Credit Facility + BESS Finance', null, null, '2025-08', 'closed', 1, 4000, 'Recip Engine (CAT G3520K) + BESS', '4GW BTM power for High Performance Compute campus in Intermountain West (Utah): CAT G3520K recip engines + 1.1GWh grid-forming BESS + CCHP. Caterpillar Financial + Wheeler Machinery (CAT dealer) as co-providers. Amount not disclosed.', 'Caterpillar Press Release — Joule/Wheeler, Aug 7 2025', 'https://www.caterpillar.com/en/news/corporate-press-releases/h/joule-caterpillar-wheeler.html', null, null, 'equipment_gen', 4000, 'Recip Engine + BESS', 'Caterpillar'],
+
+  ['Baker Hughes / Twenty20 Energy — Frame 5 Gas Turbine Supply', null, 'Twenty20 Energy', 'Baker Hughes Company', 'Baker Hughes', 'Equipment Supply Agreement', null, null, '2026-02', 'closed', 1, 330, 'Gas Turbine (BH Frame 5)', '10 × Baker Hughes Frame 5 aeroderivative gas turbines (~33MW each = 330MW) for US data center projects. Equipment supply financing details pending. Frame 5 is a fast-deploy BTM turbine.', 'Baker Hughes IR — Twenty20 Energy Frame 5 Order, Feb 11 2026', 'https://investors.bakerhughes.com/news/press-releases/news-details/2026/Baker-Hughes-Receives-Gas-Turbine-Order-from-Twenty20-Energy-to-Power-U-S--Data-Center-Infrastructure/default.aspx', null, null, 'equipment_gen', 330, 'Gas Turbine', 'Baker Hughes'],
+
+  ['FuelCell Energy / SDCL — 450MW MCFC Fuel Cell Financing Partnership', null, 'FuelCell Energy Inc.', 'SDCL (Sustainable Development Capital LLP)', 'SDCL', 'Infrastructure Finance Partnership', null, null, '2026-01', 'closed', 1, 450, 'MCFC Fuel Cell (FuelCell Energy DuraPower)', 'SDCL providing project/equipment capital for up to 450MW of FuelCell Energy MCFC systems for global data center deployments. FCEL providing equipment and O&M. Amount not fully disclosed.', 'EnkiAI / FCEL Materials — Jan 2026', 'https://enkiai.com/ai-market-intelligence/fuel-cells-essential-data-center-power-for-2026-grid-lock', 'Stock Titan / FCEL Press Release — 12.5MW Power Block, Mar 23 2026', 'https://www.stocktitan.net/news/FCEL/fuel-cell-energy-scales-up-for-data-centers-with-packaged-12-5-mw-blvrjfuoc6k8.html', 'equipment_gen', 450, 'MCFC Fuel Cell', 'FuelCell Energy'],
+
+  ['Conduit Power — $200M Equipment Financing Facility (ERCOT)', null, 'Conduit Power LLC', 'Eldridge Industries', 'Eldridge Industries', 'Equipment Financing Facility', 200, null, '2026-04', 'closed', 1, null, 'Recip Engine (Jenbacher-based / AB Energy)', '$200M equipment financing facility secured by Conduit Power ERCOT distributed generation portfolio. Positions for data center BTM customers in Texas. Source: Equipment Finance Advisor, Apr 15 2026.', 'Equipment Finance Advisor — Conduit Power $200M, Apr 15 2026', 'https://www.equipmentfa.com/news/41279/conduit-power-eldridge-announce-200mm-equipment-financing-facility', null, null, 'equipment_gen', null, 'Recip Engine', 'AB Energy'],
 ];
 
 for (const d of deals) dealInsert.run(...d);
 console.log(`Seeded ${deals.length} financing deals`);
 
-// ── LENDER ACTIVITY (league table) ───────────────────────────────────────
-const activityInsert = db.prepare(`INSERT OR IGNORE INTO lender_activity
-  (id, lender_id, year, total_dc_volume_bn, dc_deal_count, btm_specific,
-   rank_infralogic, yoy_growth_pct, notes, source_label, source_url)
-  VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`);
-
-const activities = [
-  [1, 1, 2025, 6.72, null, 0, 6, 562, 'JPMorgan rose 22 spots to #6 in North America PF rankings — first time in top 10 in 4 years. Largest single lender in US DC project finance in 2025.', 'ION Analytics / Infralogic Project Finance Rankings 2025', 'https://ionanalytics.com/insights/infralogic/data-center-boom-sees-explosion-in-bulge-bracket-project-finance/'],
-  [2, 2, 2025, null, null, 0, null, 182, 'Goldman Sachs 182% YoY growth in DC project finance volume per Infralogic 2025 rankings.', 'ION Analytics / Infralogic Project Finance Rankings 2025', 'https://ionanalytics.com/insights/infralogic/data-center-boom-sees-explosion-in-bulge-bracket-project-finance/'],
-  [3, 5, 2025, null, null, 0, null, 225, 'Bank of America 225% YoY growth in DC project finance volume per Infralogic 2025 rankings.', 'ION Analytics / Infralogic Project Finance Rankings 2025', 'https://ionanalytics.com/insights/infralogic/data-center-boom-sees-explosion-in-bulge-bracket-project-finance/'],
-  [4, 4, 2025, null, null, 0, null, 285, 'Morgan Stanley 285% YoY growth in DC project finance volume per Infralogic 2025 rankings.', 'ION Analytics / Infralogic Project Finance Rankings 2025', 'https://ionanalytics.com/insights/infralogic/data-center-boom-sees-explosion-in-bulge-bracket-project-finance/'],
-  [5, 6, 2025, null, null, 0, null, 109, 'Citigroup 109% YoY growth in DC project finance volume per Infralogic 2025 rankings.', 'ION Analytics / Infralogic Project Finance Rankings 2025', 'https://ionanalytics.com/insights/infralogic/data-center-boom-sees-explosion-in-bulge-bracket-project-finance/'],
+const lenderInsert = db.prepare(`INSERT INTO financing_lenders (name,short_name,type,hq,country,website,description,logo_initials,company_id,sort_order) VALUES (?,?,?,?,?,?,?,?,?,?)`);
+const lenders = [
+  // ── Bulge bracket (existing lenders — re-seeded) ───────────────────────────
+  ['JPMorgan Chase','JPM','Bulge Bracket','New York, NY','USA','jpmorgan.com','JPMorgan leads DC project and equipment finance globally — lead on Vantage $22B, Stargate $15B, VoltaGrid ABL. $6.72B in DC project finance in 2025 (Infralogic #1 rank).','JPM',null,1],
+  ['Goldman Sachs','GS','Bulge Bracket','New York, NY','USA','goldmansachs.com','Lead on VoltaGrid $2B SR Secured Notes, CloudHQ ABS. Active in both DC project bonds and generator fleet securitizations.','GS',null,2],
+  ['Morgan Stanley','MS','Bulge Bracket','New York, NY','USA','morganstanley.com','Switch $768M ABS lead. Active in stabilized DC asset securitization.','MS',null,3],
+  ['Bank of America','BofA','Bulge Bracket','Charlotte, NC','USA','bankofamerica.com','Lead on Aligned Data Centers Project Caprock. Active in construction lending for hyperscale campuses.','BA',null,4],
+  ['Citigroup','Citi','Bulge Bracket','New York, NY','USA','citi.com','Co-lead on Stargate financing, Solaris term loan. Strong in large syndicated BTM project facilities.','C',null,5],
+  ['Deutsche Bank','DB','European Bulge Bracket','Frankfurt, Germany','Germany','db.com','Co-arranger on multiple DC construction and ABS facilities. Active in European-origin DC developer financing.','DB',null,6],
+  ['Barclays','BCS','European Bulge Bracket','London, UK','UK','barclays.com','Co-bookrunner on VoltaGrid ABL. Authored Oct 2025 seminal BTM market shift research note with S&P Global.','BCS',null,7],
+  ['Apollo Global Management','APO','Alternative Credit','New York, NY','USA','apollo.com','Co-lender on Meta Prometheus $29B. Leading alternative credit provider in large data center project bonds.','APO',null,8],
+  ['Blackstone Credit','BX','Alternative Credit','New York, NY','USA','blackstone.com','CoreWeave co-lender. Largest alternative asset manager increasingly active in DC infrastructure credit.','BX',null,9],
+  ['PIMCO','PIMCO','Institutional Investor','Newport Beach, CA','USA','pimco.com','Lead on Meta Prometheus $29B project bond — largest single DC finance. Infrastructure bonds specialist.','PIM',null,10],
+  // ── Equipment / generator finance specialists ──────────────────────────────
+  ['Caterpillar Financial Products Corp.','CAT Fin','OEM Captive Finance','Irving, TX','USA','cat.com/financial','Caterpillar captive finance arm providing equipment credit facilities for CAT G3520K/G3516K generator set orders. Active on Monarch 2GW and Joule 4GW Utah facilities — among the largest BTM equipment financing programs. Shortest processing times in the industry due to OEM integration.','CAT',null,11],
+  ['Keystone National Group','KNG','Specialty Equipment Finance','Dallas, TX','USA','keystonenational.com','Dallas-based specialty equipment lender. Lead on Fermi America / Project Matador $865M turbine equipment facility (Siemens SGT-800, West Texas). Focus: power generation equipment, oilfield assets.','KNG',null,12],
+  ['Beal Bank USA','Beal','Specialty / Private Bank','Plano, TX','USA','bealbank.com','Private bank known for large single-ticket specialty lending. Two tranches on Fermi/Matador ($165M total). One of the few US banks with appetite for large non-investment-grade equipment tickets.','BEAL',null,13],
+  ['SDCL (Sustainable Development Capital LLP)','SDCL','Infrastructure / Green Finance','London, UK','UK','sdcl.com','Specialist infrastructure investor in clean energy assets. $450MW FuelCell Energy MCFC deployment partnership (Jan 2026). Focus: distributed generation, fuel cells, clean energy infrastructure.','SDCL',null,14],
+  ['Mizuho Bank','MZBF','Japanese Commercial','Tokyo, Japan','Japan','mizuho-fg.com','Joint bookrunner on VoltaGrid ABL. Japanese banks (Mizuho, MUFG, SMBC) are dominant in global project and equipment finance for energy infrastructure.','MZH',null,15],
+  ['Texas Capital Bank','TCB','Regional Bank','Dallas, TX','USA','texascapitalbank.com','Participated in VoltaGrid ABL. Texas-based regional bank growing in BTM power platform financing, oilfield equipment, and energy infrastructure.','TCB',null,16],
+  ['Cadence Bank','CADE','Regional Bank','Tupelo, MS','USA','cadencebank.com','Participated in VoltaGrid ABL. Southern US regional bank with growing energy infrastructure and equipment lending exposure.','CAD',null,17],
+  ['Eldridge Industries','ELDR','Alternative / PE Finance','Greenwich, CT','USA','eldridge.com','Lead on Conduit Power $200M equipment financing facility (ERCOT BTM gen portfolio, Apr 2026). Private investment firm focused on media, insurance, sports, and energy infrastructure.','ELD',null,18],
 ];
 
-for (const a of activities) activityInsert.run(...a);
-console.log(`Seeded ${activities.length} lender activity records`);
-
-// Spawn the server as a child process to avoid SQLite WAL lock conflicts
-
+for (const l of lenders) lenderInsert.run(...l);
+console.log(`Seeded ${lenders.length} financing lenders`);
 
 db.close();
 console.log('DB setup complete');
