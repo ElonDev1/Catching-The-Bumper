@@ -281,18 +281,20 @@ db.exec('DROP TABLE IF EXISTS financing_lenders');
 db.exec(`CREATE TABLE financing_lenders (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT NOT NULL, short_name TEXT, type TEXT NOT NULL, hq TEXT, country TEXT DEFAULT 'USA', website TEXT, description TEXT, logo_initials TEXT, company_id INTEGER, sort_order INTEGER DEFAULT 99)`);
 db.exec(`CREATE TABLE financing_deals (id INTEGER PRIMARY KEY AUTOINCREMENT, project_name TEXT NOT NULL, project_id INTEGER, borrower TEXT NOT NULL, lead_lenders TEXT NOT NULL, all_lenders TEXT, deal_type TEXT NOT NULL, amount_mm REAL, currency TEXT DEFAULT 'USD', sofr_spread_bps INTEGER, close_date TEXT, status TEXT NOT NULL DEFAULT 'closed', btm_specific INTEGER DEFAULT 0, btm_mw REAL, btm_tech TEXT, structure_notes TEXT, source_label TEXT NOT NULL, source_url TEXT NOT NULL, source_2_label TEXT, source_2_url TEXT, financing_category TEXT DEFAULT 'dc_project', financed_mw REAL, equipment_type TEXT, oem TEXT)`);
 db.exec(`CREATE TABLE lender_activity (id INTEGER PRIMARY KEY AUTOINCREMENT, lender_id INTEGER NOT NULL, year INTEGER NOT NULL, total_dc_volume_bn REAL, dc_deal_count INTEGER, btm_specific INTEGER DEFAULT 0, rank_infralogic INTEGER, yoy_growth_pct REAL, notes TEXT, source_label TEXT, source_url TEXT)`);
+db.exec(`CREATE TABLE IF NOT EXISTS deal_lender_relationships (id INTEGER PRIMARY KEY AUTOINCREMENT, deal_id INTEGER, lender_name TEXT NOT NULL, role TEXT, tranche TEXT, confirmed INTEGER DEFAULT 1)`);
+db.exec(`CREATE TABLE IF NOT EXISTS deal_tranches (id INTEGER PRIMARY KEY AUTOINCREMENT, deal_id INTEGER, tranche_name TEXT NOT NULL, seniority_rank INTEGER, amount_usd_bn REAL, structure_type TEXT, rate TEXT, maturity TEXT, collateral TEXT, rating TEXT, purpose TEXT, sourced INTEGER DEFAULT 1, source_url TEXT, source_name TEXT)`);
 
 const dealInsert = db.prepare(`INSERT INTO financing_deals (project_name,project_id,borrower,lead_lenders,all_lenders,deal_type,amount_mm,sofr_spread_bps,close_date,status,btm_specific,btm_mw,btm_tech,structure_notes,source_label,source_url,source_2_label,source_2_url,financing_category,financed_mw,equipment_type,oem) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`);
 
 const deals = [
   // ── DC PROJECT FINANCE ──────────────────────────────────────────────────────
-  ['Meta Prometheus Louisiana Hyperscale Campus (Phase 1)', null, 'Meta Platforms Inc.', 'PIMCO', 'PIMCO, Apollo Global Management, Blackstone Credit', 'Project Bond (144A/Reg S)', 29000, null, '2025-11', 'closed', 1, 2000, 'Gas Turbine / Recip Engine', '$29B multi-tranche bond secured against 5 GW Louisiana campus. Prometheus Hyperscale CEO Bernard Looney (ex-BP) as operator. Largest single data center financing in history.', 'S&P Global MI — Data Center Financing Deep Dive', 'https://www.spglobal.com/market-intelligence/en/news-insights/articles/2025/10/data-center-developers-turn-to-distributed-behind-the-meter-power-94174247', null, null, 'dc_project', null, null, null],
+  ['Meta Prometheus Louisiana Hyperscale Campus (Phase 1)', null, 'Meta Platforms Inc.', 'PIMCO', 'PIMCO ($26B debt lead), Blue Owl Capital ($3B equity)', 'Project Bond (144A/Reg S)', 29000, null, '2025-11', 'closed', 1, 2000, 'Gas Turbine / Recip Engine', '$29B financing: ~$26B investment-grade project bonds (PIMCO lead) + $3B equity (Blue Owl Capital). Apollo and KKR were finalist bidders but NOT selected. Morgan Stanley acted as financial advisor to Meta, not lender. Largest single data center financing in history.', 'S&P Global MI — Data Center Financing Deep Dive', 'https://www.spglobal.com/market-intelligence/en/news-insights/articles/2025/10/data-center-developers-turn-to-distributed-behind-the-meter-power-94174247', null, null, 'dc_project', null, null, null],
 
   ['Vantage Data Centers Hyperscale Portfolio', null, 'Vantage Data Centers', 'JPMorgan Chase', 'JPMorgan, Goldman Sachs, Morgan Stanley, MUFG, Mizuho, Wells Fargo', 'Syndicated Term Loan B + Revolver', 22000, 175, '2025-10', 'closed', 1, 1000, 'Recip Engine (VoltaGrid/INNIO)', '$22B portfolio-level financing across Vantage North American hyperscale campuses. VoltaGrid BTM power integral to campus power delivery.', 'Reuters — Vantage Data Centers secures $22B financing', 'https://www.reuters.com/business/vantage-data-centers-secures-record-22-billion-financing-2025-10/', null, null, 'dc_project', null, null, null],
 
-  ['CoreWeave AI Data Center Build-Out (Project Radiance)', null, 'CoreWeave Inc.', 'JPMorgan Chase, Goldman Sachs', 'JPMorgan, Goldman Sachs, Blackstone Credit, Apollo', 'Senior Secured Term Loan', 8500, 225, '2025-07', 'closed', 0, null, null, 'Senior secured against contracted GPU revenue from Microsoft, Meta, OpenAI. No BTM component disclosed.', 'Financial Times — CoreWeave $8.5B debt facility', 'https://www.ft.com/content/coreweave-8-5-billion-financing', null, null, 'dc_project', null, null, null],
+  ['CoreWeave AI Data Center Build-Out (Project Radiance)', null, 'CoreWeave Inc.', 'MUFG, Morgan Stanley (Co-Structuring Agents)', 'MUFG, Morgan Stanley, Goldman Sachs, JPMorgan (Co-Lead Arrangers), Blackstone Credit (Anchor Lender)', 'Delayed Draw Term Loan (DDTL 4.0)', 8500, 225, '2025-07', 'closed', 0, null, null, 'CoreWeave 8-K (Mar 31 2026, SEC EDGAR): SOFR+2.25% float + ~5.9% fixed tranche. Ratings: A3/Moody's, A(low)/DBRS — first investment-grade HPC infrastructure DDTL. Collateral: borrower entity assets + contracted AI customer agreement. Min 1.15x DSCR covenant from Jun 30 2027. Maturity: Mar 31 2032.', 'Financial Times — CoreWeave $8.5B debt facility', 'https://www.ft.com/content/coreweave-8-5-billion-financing', null, null, 'dc_project', null, null, null],
 
-  ['Project Stargate US (OpenAI / SoftBank / Oracle)', null, 'Stargate LLC (JV)', 'JPMorgan Chase', 'JPMorgan, Mizuho, MUFG, Goldman Sachs, Citigroup', 'Construction Facility + Term Loan', 15000, 200, '2025-12', 'closed', 1, 2300, 'Gas Turbine (GE LM2500) + Recip (INNIO J624)', '$15B construction + term loan for Stargate TX/NM campus. VoltaGrid providing 2.3GW BTM gas; GE Vernova aeroderivative turbines.', 'Bloomberg — Stargate financing details', 'https://www.bloomberg.com/news/articles/2025-12-stargate-financing', null, null, 'dc_project', null, null, null],
+  ['Project Stargate US (OpenAI / SoftBank / Oracle)', null, 'Stargate LLC (JV)', 'JPMorgan Chase', 'JPMorgan Chase', 'JPMorgan Chase (Phase 1: $2.3B sole lender; Phase 2: $7.1B consortium lead; total $9.4B debt + ~$5B equity from Crusoe/Blue Owl/Primary Digital)', 'Construction Loan (2 Phases)', 9400, 200, '2025-12', 'closed', 1, 2300, 'Gas Turbine (GE LM2500) + Recip (INNIO J624)', '$15B construction + term loan for Stargate TX/NM campus. VoltaGrid providing 2.3GW BTM gas; GE Vernova aeroderivative turbines.', 'Bloomberg — Stargate financing details', 'https://www.bloomberg.com/news/articles/2025-12-stargate-financing', null, null, 'dc_project', null, null, null],
 
   ['CloudHQ Reno Campus ABS', null, 'CloudHQ LLC', 'Goldman Sachs', 'Goldman Sachs, Deutsche Bank', 'Asset-Backed Securities (ABS)', 4000, null, '2026-01', 'closed', 0, null, null, 'ABS collateralized by long-term hyperscaler leases on stabilized Reno campus.', 'Data Center Dynamics — CloudHQ ABS', 'https://www.datacenterdynamics.com/en/news/cloudhq-seeks-14-billion-in-abs-funding/', null, null, 'dc_project', null, null, null],
 
@@ -305,11 +307,11 @@ const deals = [
   ['Solaris Energy Infrastructure — Senior Secured Term Loan', null, 'Solaris Energy Infrastructure (SEI)', 'Citigroup', 'Citigroup, JPMorgan, Deutsche Bank', 'Senior Secured Term Loan B', 500, 350, '2026-04', 'closed', 1, 900, 'Gas Turbine / Recip Engine', 'SEI amended term loan Apr 8, 2026: added $200M in new commitments, lifting total to $500M. Secured by 900MW gas turbine BTM expansion pipeline.', 'Investing.com — Solaris term loan amendment', 'https://www.investing.com/news/sec-filings/solaris-energy-infrastructure-amends-term-loan-to-add-200-million-commitment-93CH-4604298', null, null, 'equipment_gen', 900, 'Gas Turbine', 'Solaris Energy Infrastructure'],
 
   // ── EQUIPMENT & GENERATOR FINANCE ──────────────────────────────────────────
-  ['VoltaGrid $5B Comprehensive Financing — SR Secured Notes', null, 'VoltaGrid LLC', 'Goldman Sachs', 'Goldman Sachs, JPMorgan, Barclays, Texas Capital Bank, Cadence Bank, Mizuho', 'Senior Secured Notes (SR)', 2000, 350, '2025-11', 'closed', 1, 4300, 'Recip Engine (INNIO J624 QPac)', '$2B senior secured notes secured by VoltaGrid INNIO J624 generator fleet (4.3 GW contracted pipeline). Part of $5B comprehensive financing package.', 'VoltaGrid Press Release — $5B Comprehensive Financing, Nov 10 2025', 'https://voltagrid.com/voltagrid-closes-5-0-billion-comprehensive-financing-package', null, null, 'equipment_gen', 4300, 'Recip Engine', 'INNIO Jenbacher'],
+  ['VoltaGrid $5B Comprehensive Financing — SR Secured Notes', null, 'VoltaGrid LLC', 'Goldman Sachs', 'Goldman Sachs (left lead), JPMorgan, BMO, TD Securities, Wells Fargo, MUFG, National Bank of Canada, Scotiabank, Barclays, CIBC, Citi, Mizuho, Morgan Stanley, Texas Capital Securities, Cadence Bank', 'Senior Secured Notes (SR)', 2000, 350, '2025-11', 'closed', 1, 4300, 'Recip Engine (INNIO J624 QPac)', '$2B senior secured notes secured by VoltaGrid INNIO J624 generator fleet (4.3 GW contracted pipeline). Part of $5B comprehensive financing package.', 'VoltaGrid Press Release — $5B Comprehensive Financing, Nov 10 2025', 'https://voltagrid.com/voltagrid-closes-5-0-billion-comprehensive-financing-package', null, null, 'equipment_gen', 4300, 'Recip Engine', 'INNIO Jenbacher'],
 
-  ['VoltaGrid $5B Comprehensive Financing — ABL Facility', null, 'VoltaGrid LLC', 'JPMorgan Chase', 'JPMorgan, Barclays, Goldman Sachs, Mizuho, Texas Capital Bank, Cadence Bank', 'Asset-Based Lending (ABL)', 3000, 275, '2025-11', 'closed', 1, 4300, 'Recip Engine (INNIO J624 QPac)', '$3B ABL secured by INNIO J624 Qpac generator fleet assets. Revolving availability based on appraised value of generator sets in the fleet.', 'VoltaGrid Press Release — $5B Comprehensive Financing, Nov 10 2025', 'https://voltagrid.com/voltagrid-closes-5-0-billion-comprehensive-financing-package', null, null, 'equipment_gen', 4300, 'Recip Engine', 'INNIO Jenbacher'],
+  ['VoltaGrid $5B Comprehensive Financing — ABL Facility', null, 'VoltaGrid LLC', 'JPMorgan Chase', 'JPMorgan (admin agent), Goldman Sachs, BMO, TD Securities, Wells Fargo, MUFG, National Bank of Canada, Scotiabank, Barclays, CIBC, Citi, Mizuho, Morgan Stanley, Cadence Bank, Texas Capital Bank', 'Asset-Based Lending (ABL)', 3000, 275, '2025-11', 'closed', 1, 4300, 'Recip Engine (INNIO J624 QPac)', '$3B ABL secured by INNIO J624 Qpac generator fleet assets. Revolving availability based on appraised value of generator sets in the fleet.', 'VoltaGrid Press Release — $5B Comprehensive Financing, Nov 10 2025', 'https://voltagrid.com/voltagrid-closes-5-0-billion-comprehensive-financing-package', null, null, 'equipment_gen', 4300, 'Recip Engine', 'INNIO Jenbacher'],
 
-  ['Fermi America / Project Matador — Equipment Financing Consortium', null, 'Fermi America (ECP)', 'Keystone National Group', 'Keystone National Group, CSG Investments, Beal Bank USA', 'Equipment Credit Facility', 865, 400, '2026-02', 'closed', 1, 11000, 'Gas Turbine (Siemens SGT-800)', '$865M+ equipment credit facility secured by Siemens SGT-800 industrial gas turbines for 11GW Project Matador in West Texas (Carson County). Dallas-based specialty equipment lender consortium.', 'Fermi America Press Releases Feb–Mar 2026', 'https://www.powermag.com/engine-power-plants-surge-as-data-centers-drive-unprecedented-demand/', null, null, 'equipment_gen', 11000, 'Gas Turbine', 'Siemens Energy'],
+  ['Fermi America / Project Matador — Equipment Financing Consortium', null, 'Fermi America (ECP)', 'Keystone National Group (Facility 1), CSG Investments / Beal Bank USA (Facility 2)', 'Keystone National Group, Cape Commercial Finance (Facility 1: $200M); CSG Investments Inc. / Beal Bank USA (Facility 2: $165M)', 'Equipment Credit Facility', 365, 400, '2026-02', 'closed', 1, 11000, 'Gas Turbine (Siemens SGT-800)', 'Two sourced facilities: Facility 1 — $200M (Keystone National Group + Cape Commercial Finance, Feb 2026, initial draw made); Facility 2 — $165M (CSG Investments/Beal Bank USA, Mar 2026, 12.90% fixed, Aug 2031 maturity, 80% advance rate per draw, $20M min liquidity covenant). Total reported consortium ~$865M+ implies additional undisclosed tranches. Sources: Fermi 8-K Feb 25 2026 + PR Newswire Mar 27 2026.', 'Fermi America Press Releases Feb–Mar 2026', 'https://www.powermag.com/engine-power-plants-surge-as-data-centers-drive-unprecedented-demand/', null, null, 'equipment_gen', 11000, 'Gas Turbine', 'Siemens Energy'],
 
   ['Brookfield Renewable / Bloom Energy — $5B SOFC Deployment Framework', null, 'Bloom Energy Corp.', 'Brookfield Renewable Partners', 'Brookfield Renewable Partners', 'Strategic Equity + Offtake Framework', 5000, null, '2025-10', 'closed', 1, 2000, 'SOFC Fuel Cell (Bloom SureSource)', '$5B strategic framework for deployment of 2GW Bloom SureSource SOFC fuel cells across Brookfield AI data center portfolio. Fuel cell equipment financing structured as deployment partnership.', 'Bloom Energy IR — Brookfield $5B Framework, Oct 12 2025', 'https://ir.bloomenergy.com/news-releases/news-release-details/bloom-energy-and-brookfield-renewable-partners-announce-5-billion', null, null, 'equipment_gen', 2000, 'SOFC Fuel Cell', 'Bloom Energy'],
 
@@ -353,6 +355,110 @@ const lenders = [
 
 for (const l of lenders) lenderInsert.run(...l);
 console.log(`Seeded ${lenders.length} financing lenders`);
+
+
+
+// ── Deal Tranches & Lender Relationships (always drop+recreate) ──────────────
+db.exec('DELETE FROM deal_tranches');
+db.exec('DELETE FROM deal_lender_relationships');
+
+const trancheInsert = db.prepare(`INSERT INTO deal_tranches (deal_id,tranche_name,seniority_rank,amount_usd_bn,structure_type,rate,maturity,collateral,rating,purpose,sourced,source_url,source_name) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)`);
+const relInsert = db.prepare(`INSERT INTO deal_lender_relationships (deal_id,lender_name,role,tranche,confirmed) VALUES (?,?,?,?,?)`);
+
+// Deal IDs from financing_deals table (seeded above in order)
+// 1=Meta, 2=Vantage, 3=CoreWeave, 4=Stargate, 5=CloudHQ, 6=Switch, 7=Aligned
+// 8=DigitalBridge, 9=Solaris, 10=VoltaGrid SR Notes, 11=VoltaGrid ABL
+// 12=Fermi, 13=Brookfield/Bloom, 14=CAT/Monarch, 15=Joule/CAT
+// 16=BKR/Twenty20, 17=FuelCell/SDCL, 18=Conduit/Eldridge
+
+// ── DEAL 10: VoltaGrid SR Secured Notes $2B ──────────────────────────────────
+// Source: VoltaGrid GlobeNewswire Nov 10 2025 + Simpson Thacher announcement
+trancheInsert.run(10,'$2.0B Senior Secured Second Lien Notes due 2030',1,2.0,'Senior Secured Notes','7.375% fixed (Rule 144A/Reg S)','2030','Second lien on VoltaGrid INNIO Qpac generator fleet (4.3+ GW)','Not rated','Refinance existing credit facility + capex + growth',1,'https://www.globenewswire.com/news-release/2025/11/10/3184496/0/en/VoltaGrid-Closes-5-0-Billion-Comprehensive-Financing-Package','VoltaGrid GlobeNewswire Nov 10 2025');
+const srNotesBrunners = [
+  ['Goldman Sachs','Left Lead Bookrunner','SR Notes',1],
+  ['JPMorgan','Joint Bookrunner','SR Notes',1],
+  ['BMO Capital Markets','Joint Bookrunner','SR Notes',1],
+  ['TD Securities','Joint Bookrunner','SR Notes',1],
+  ['Wells Fargo','Joint Bookrunner','SR Notes',1],
+  ['MUFG','Joint Bookrunner','SR Notes',1],
+  ['National Bank of Canada','Joint Bookrunner','SR Notes',1],
+  ['Scotiabank','Joint Bookrunner','SR Notes',1],
+  ['Barclays','Joint Bookrunner','SR Notes',1],
+  ['CIBC','Joint Bookrunner','SR Notes',1],
+  ['Citigroup','Joint Bookrunner','SR Notes',1],
+  ['Mizuho','Joint Bookrunner','SR Notes',1],
+  ['Morgan Stanley','Joint Bookrunner','SR Notes',1],
+  ['Texas Capital Securities','Joint Bookrunner','SR Notes',1],
+];
+for (const r of srNotesBrunners) relInsert.run(10,...r);
+
+// ── DEAL 11: VoltaGrid ABL $3B ───────────────────────────────────────────────
+trancheInsert.run(11,'$3.0B Asset-Based Revolving Credit Facility (First Lien)',1,3.0,'ABL Revolving Credit','Not disclosed','Not disclosed','Borrowing base — VoltaGrid generator fleet assets (INNIO Qpac units, 4.3+ GW contracted)','Not rated','Working capital, growth initiatives, capex funding',1,'https://www.globenewswire.com/news-release/2025/11/10/3184496/0/en/VoltaGrid-Closes-5-0-Billion-Comprehensive-Financing-Package','VoltaGrid GlobeNewswire Nov 10 2025');
+const ablBrunners = [
+  ['JPMorgan','Admin Agent','ABL',1],
+  ['Goldman Sachs','Joint Lead Arranger & Bookrunner','ABL',1],
+  ['BMO Capital Markets','Joint Lead Arranger & Bookrunner','ABL',1],
+  ['TD Securities','Joint Lead Arranger & Bookrunner','ABL',1],
+  ['Wells Fargo','Joint Lead Arranger & Bookrunner','ABL',1],
+  ['MUFG','Joint Lead Arranger & Bookrunner','ABL',1],
+  ['National Bank of Canada','Joint Lead Arranger & Bookrunner','ABL',1],
+  ['Scotiabank','Joint Lead Arranger & Bookrunner','ABL',1],
+  ['Barclays','Joint Lead Arranger & Bookrunner','ABL',1],
+  ['CIBC','Joint Lead Arranger & Bookrunner','ABL',1],
+  ['Citigroup','Joint Lead Arranger & Bookrunner','ABL',1],
+  ['Mizuho','Participating Lender','ABL',1],
+  ['Morgan Stanley','Participating Lender','ABL',1],
+  ['Cadence Bank','Participating Lender','ABL',1],
+  ['Texas Capital Bank','Participating Lender','ABL',1],
+];
+for (const r of ablBrunners) relInsert.run(11,...r);
+
+// ── DEAL 1: Meta Prometheus $29B ─────────────────────────────────────────────
+trancheInsert.run(1,'~$26.0B Investment-Grade Project Bonds (Senior)',1,26.0,'Project Bond (144A/Reg S)','Not disclosed','Not disclosed','Prometheus data center campus assets, Louisiana','Investment Grade','Finance Prometheus hyperscale campus construction',1,'https://www.reuters.com/business/meta-taps-pimco-blue-owl-29-billion-data-center-expansion-project-source-says-2025-08-08/','Reuters Aug 7-8 2025');
+trancheInsert.run(1,'$3.0B Equity',2,3.0,'Equity','N/A — equity','N/A','Prometheus campus equity co-investment','N/A','Equity co-investment alongside PIMCO debt',1,'https://www.reuters.com/business/meta-taps-pimco-blue-owl-29-billion-data-center-expansion-project-source-says-2025-08-08/','Reuters Aug 7-8 2025');
+relInsert.run(1,'PIMCO','Lead Arranger (Debt)','Project Bonds',1);
+relInsert.run(1,'Blue Owl Capital','Equity Provider','Equity',1);
+relInsert.run(1,'Morgan Stanley','Financial Advisor to Meta (not lender)','N/A',1);
+
+// ── DEAL 4: Stargate $9.4B (2 phases) ───────────────────────────────────────
+trancheInsert.run(4,'Phase 1 — $2.3B Construction Loan (Buildings 1-2)',1,2.3,'Construction Loan','Not disclosed','Not disclosed','Stargate Abilene campus Phase 1 assets','Not rated','Fund construction of first 2 buildings (~200+ MW)',1,'https://www.nmrk.com/insights/press-releases/newmark-facilitates-7-1-billion-construction-loan-to-develop-ai-data-center','Newmark Press Release May 22 2025');
+trancheInsert.run(4,'Phase 2 — $7.1B Construction Loan (Buildings 3-8)',2,7.1,'Construction Loan','Not disclosed','Not disclosed','Stargate Abilene campus Phase 2 assets (6 buildings)','Not rated','Fund construction of 6 additional buildings (~1.0 GW)',1,'https://www.nmrk.com/insights/press-releases/newmark-facilitates-7-1-billion-construction-loan-to-develop-ai-data-center','Newmark Press Release May 22 2025');
+trancheInsert.run(4,'~$5.0B Equity (Crusoe + Blue Owl + Primary Digital)',3,5.0,'Equity','N/A','N/A','Equity stake in Stargate JV (split not disclosed)','N/A','Equity contribution — split between Crusoe/Blue Owl/Primary Digital not disclosed',0,null,'Not publicly disclosed');
+relInsert.run(4,'JPMorgan','Sole/Lead Lender (both phases)','Phase 1 + Phase 2',1);
+relInsert.run(4,'Blue Owl Capital','Equity Co-Investor','Equity',1);
+relInsert.run(4,'Newmark Group','Debt & Equity Advisor (not lender)','Advisory',1);
+
+// ── DEAL 3: CoreWeave $8.5B DDTL ────────────────────────────────────────────
+trancheInsert.run(3,'$8.5B Delayed Draw Term Loan Facility (DDTL 4.0)',1,8.5,'Delayed Draw Term Loan','SOFR+2.25% (float) / ~5.9% (fixed)','Mar 31 2032','Substantially all borrower assets + equity pledge + contracted customer agreement','A3/Moody's, A(low)/DBRS','Finance GPU servers + infrastructure for contracted AI customer',1,'https://www.stocktitan.net/sec-filings/CRWV/8-k-core-weave-inc-reports-material-event-0b56fb496fc5.html','CoreWeave 8-K Mar 31 2026 (SEC EDGAR)');
+relInsert.run(3,'MUFG','Co-Structuring Agent & Joint Bookrunner','DDTL 4.0',1);
+relInsert.run(3,'Morgan Stanley','Co-Structuring Agent & Joint Bookrunner','DDTL 4.0',1);
+relInsert.run(3,'Goldman Sachs','Coordinating Lead Arranger','DDTL 4.0',1);
+relInsert.run(3,'JPMorgan','Coordinating Lead Arranger','DDTL 4.0',1);
+relInsert.run(3,'Blackstone Credit','Anchor Lender','DDTL 4.0',1);
+
+// ── DEAL 12: Fermi America / Project Matador ─────────────────────────────────
+trancheInsert.run(12,'Facility 1 — $200M Equipment Financing (Feb 2026)',1,0.2,'Equipment Finance','Not disclosed','Not disclosed','Project Matador equipment — Siemens SGT-800-57 turbines (first 2.3 GW)','Not rated','Finance first 2.3 GW of Project Matador turbine orders',1,'https://fermiamerica.com/fermi-america-makes-initial-draw-on-200-million-equipment-facility-from-keystone-national-group-and-cape-commercial-finance-to-accelerate-the-delivery-of-the-first-2-3gw-of-project-matador/','Fermi America PR Feb 19 2026');
+trancheInsert.run(12,'Facility 2 — $165M Equipment Financing (Mar 2026)',2,0.165,'Equipment Finance','12.90% fixed per annum','Aug 19 2031','6 × Siemens Energy SGT-800-57 gas turbines + substantially all borrower assets + equity pledge','Not rated','Finance remaining progress payments on 6 SGT-800-57 turbines for 2028 delivery',1,'https://www.prnewswire.com/news-releases/fermi-america-secures-165-million-equipment-financing-facility-from-csg-investments-an-affiliate-of-beal-bank-usa-to-accelerate-delivery-of-six-sgt-800-gas-turbines-for-2028-delivery-at-project-matador-302727192.html','PR Newswire Mar 27 2026');
+relInsert.run(12,'Keystone National Group','Lead Lender','Facility 1',1);
+relInsert.run(12,'Cape Commercial Finance','Co-Lender','Facility 1',1);
+relInsert.run(12,'CSG Investments Inc.','Lender (Beal Bank affiliate)','Facility 2',1);
+relInsert.run(12,'Beal Bank USA','Affiliated with CSG Investments','Facility 2',1);
+
+// ── Remaining deals — lender relationships only (no detailed tranches sourced) ──
+// Deal 2: Vantage $22B
+relInsert.run(2,'JPMorgan','Lead Underwriter',null,1);
+relInsert.run(2,'MUFG','Lead Underwriter',null,1);
+// Deal 9: Solaris $500M
+relInsert.run(9,'Citigroup','Lead Arranger',null,1);
+relInsert.run(9,'JPMorgan','Arranger',null,1);
+relInsert.run(9,'Deutsche Bank','Arranger',null,1);
+// Deal 13: Brookfield/Bloom
+relInsert.run(13,'Brookfield Renewable Partners','Strategic Equity Partner',null,1);
+// Deal 18: Conduit Power
+relInsert.run(18,'Eldridge Industries','Equipment Finance Provider',null,1);
+
+console.log('Deal tranches and lender relationships seeded');
+
 
 db.close();
 console.log('DB setup complete');
