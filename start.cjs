@@ -115,7 +115,15 @@ function seedTable(table, rows) {
   db.transaction((items) => { for (const row of items) stmt.run(cols.map(c => row[c] !== undefined ? row[c] : null)); })(rows);
 }
 
-['companies','projects','btm_sources','project_companies','competitors','competitor_news','rto_queue_snapshots','rto_large_load_queue','midstream_pipelines','midstream_shippers','midstream_signals'].forEach(t => seedTable(t, SEED[t]));
+// competitor_news: always fully replace so new intel shows up on Render
+if (SEED.competitor_news && SEED.competitor_news.length > 0) {
+  try { db.exec('DELETE FROM competitor_news'); } catch(e) {}
+  const insCompNews = db.prepare('INSERT INTO competitor_news (id,competitor_id,headline,summary,url,published_date,category) VALUES (?,?,?,?,?,?,?)');
+  SEED.competitor_news.forEach(r => insCompNews.run(r.id,r.competitor_id,r.headline??null,r.summary??null,r.url??null,r.published_date??null,r.category??null));
+  console.log('competitor_news refreshed:', SEED.competitor_news.length);
+}
+
+['companies','projects','btm_sources','project_companies','competitors','rto_queue_snapshots','rto_large_load_queue','midstream_pipelines','midstream_shippers','midstream_signals'].forEach(t => seedTable(t, SEED[t]));
 
 // Always apply PitchBook + financial updates (even if rows already exist)
 console.log('Applying financial + PitchBook updates...');
@@ -181,10 +189,11 @@ console.log('Companies updated: ' + SEED.companies.length);
 
 
 
-// Always refresh news_articles (delete Enverus + reinsert from SEED)
+// Always fully refresh news_articles from SEED on every startup
+// DELETE + reinsert ensures Render's persistent DB always matches the latest SEED
 if (SEED.news_articles && SEED.news_articles.length > 0) {
-  try { db.exec("DELETE FROM news_articles WHERE source = 'Enverus Intelligence'"); } catch(e) {}
-  const insNews = db.prepare('INSERT OR IGNORE INTO news_articles (id,headline,summary,url,source,published_date,category,tab,relevance_score,user_feedback) VALUES (?,?,?,?,?,?,?,?,?,?)');
+  try { db.exec('DELETE FROM news_articles'); } catch(e) {}
+  const insNews = db.prepare('INSERT INTO news_articles (id,headline,summary,url,source,published_date,category,tab,relevance_score,user_feedback) VALUES (?,?,?,?,?,?,?,?,?,?)');
   SEED.news_articles.forEach(a => insNews.run(a.id,a.headline,a.summary,a.url,a.source,a.published_date,a.category,a.tab,a.relevance_score??5,a.user_feedback??null));
   console.log('News articles refreshed: ' + SEED.news_articles.length);
 }
